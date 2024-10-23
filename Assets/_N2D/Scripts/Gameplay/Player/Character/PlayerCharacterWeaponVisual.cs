@@ -39,23 +39,25 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             UpdateWeaponRotationVisual();
         }
 
-        private void UpdateWeaponRotationVisual()
-        {
-            var interpolator = _weapon.FindInterpolator(nameof(_weapon.Degree));
-            bool didGetData = interpolator.GetInterpolationData(InterpolationSource.Auto, out float from, out float to, out float alpha);
+    private void UpdateWeaponRotationVisual()
+    {
+        // Smoothing speed for weapon rotation
+        float rotationSmoothingSpeed = 64f;
 
-            float interpolatedDegree;
-           
-            if (didGetData)
-                interpolatedDegree = LerpDegree(from, to, alpha);
-            else
-                interpolatedDegree = _weapon.Degree;
+        // Get the interpolated rotation from the network (if available)
+        var interpolator = _weapon.FindInterpolator(nameof(_weapon.Degree));
+        bool didGetData = interpolator.GetInterpolationData(InterpolationSource.Auto, out float from, out float to, out float alpha);
 
-            _weaponVisual.rotation = Quaternion.Euler(0, 0, interpolatedDegree);
+        // Calculate the interpolated degree
+        float interpolatedDegree = didGetData ? LerpDegree(from, to, alpha) : _weapon.Degree;
 
-            bool flipY = _weapon.Degree < 89 && _weapon.Degree > -89;
-            _weaponRenderer.flipY = !flipY;
-        }
+        // Convert degree to Quaternion for rotation
+        Quaternion targetRotation = Quaternion.Euler(0, 0, interpolatedDegree);
+
+        // Smoothly rotate weapon visual towards the target rotation
+        _weaponVisual.rotation = Quaternion.Lerp(_weaponVisual.rotation, targetRotation, Time.deltaTime * rotationSmoothingSpeed);
+    }
+
 
         private const float INTERPOLATION_TOLERANCE = 100f;
 

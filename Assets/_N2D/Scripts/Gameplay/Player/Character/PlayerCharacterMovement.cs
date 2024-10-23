@@ -48,7 +48,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
 
                 _isMoving = inputDirection.magnitude > 0.1f;
 
-                _rigidbody2D.linearVelocity += velocity;
+                _rigidbody2D.linearVelocity = _moveSpeed * inputDirection;
                 _dashButtonPressed = input.Jump;
             }
         }

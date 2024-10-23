@@ -19,7 +19,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Animate
         public override void NetworkRender()
         {
             PlayAnimation();
-            FlipPlayer();
         }
 
         private void PlayAnimation()
@@ -29,11 +28,5 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Animate
             _animator.SetBool(PARAM_ANIMATION_SPEED, isWalking);
         }
 
-        private void FlipPlayer()
-        {
-            bool flipX = _weapon.Degree < 89 && _weapon.Degree > -89;
-
-            _spriteRenderer.flipX = !flipX;
-        }
     }
 }
