@@ -8,60 +8,68 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
 {
     public class PlayerCharacterMovement : NetworkBehaviour
     {
-        [SerializeField] private Rigidbody2D _rigidbody2D;  // Reference to Rigidbody2D for applying physics
-        [SerializeField] private float _moveSpeed = 5f;     // Normal movement speed
-        [SerializeField] private float _dashForce = 10f;    // Force applied during dash (previously jump)
-        [SerializeField] private float _doubleDashForce = 8f;  // Force applied for second dash (previously double jump)
-        [SerializeField] private float _dashDelay = 0.2f;   // Delay between dashes (previously double jump delay)
+        [SerializeField] private Rigidbody2D _rigidbody2D;
+        [SerializeField] private float _moveSpeed;
+        [SerializeField] private float _jumpForce;
+        [SerializeField] private float _doubleJumpForce;
+        [SerializeField] private float _doubleJumpDelay = 0.2f;
+        [Networked] private bool _isGrounded { get; set; }
+        [Networked] private int _jumpCount { get; set; }
+        [Networked] private bool _jumpButtonPressed { get; set; }
+        [Networked] private bool _isWalking { get; set; }
 
-        [Networked] private int _dashCount { get; set; }    // Number of remaining dashes (2 = both dashes available)
-        [Networked] private bool _dashButtonPressed { get; set; }  // To track dash button press
-        [Networked] private bool _isMoving { get; set; }    // To track whether the player is moving
+        private TickTimer _timerDoubleJumpDelay;
 
-        private TickTimer _timerDashDelay;  // Timer to track the delay between the first and second dash
+        [SerializeField] private Transform _groundChecker;
+        [SerializeField] private LayerMask _groundLayer;
+        [SerializeField] private float _groundCheckOverlapRadius = 0.1f;
 
-        public bool IsMoving => _isMoving;
+        public bool IsWalking => _isWalking;
 
         public override void NetworkFixedUpdate()
         {
-            // Ensure the player has both dashes available at the start
-            if (_dashCount == 0) _dashCount = 2;
+            _isGrounded = GetIsGrounded();
 
-            // Fetch input
+            if (_isGrounded)
+            {
+                _jumpCount = 2;
+            }
+
             if (FetchInput(out PlayerCharacterInput input))
             {
-                // Movement vector based on WASD input (normalized for balanced movement speed in all directions)
-                Vector2 inputDirection = new Vector2(input.HorizontalMove, input.VerticalMove).normalized;
+                bool jumpButtonWasPressedThisTick = _jumpButtonPressed == false && input.Jump;
 
-                // Normal movement velocity
-                Vector2 velocity = _moveSpeed * inputDirection * Sandbox.FixedDeltaTime;
-
-                // Dashing logic (replacing jumping logic)
-                bool dashButtonWasPressedThisTick = !_dashButtonPressed && input.Jump; // Dash is triggered by the jump button
-
-                // First Dash
-                if (dashButtonWasPressedThisTick && _dashCount == 2)
+                Vector2 velocity = _moveSpeed * input.HorizontalMove * Sandbox.FixedDeltaTime * Vector2.right;
+                
+                // First Jump
+                if (jumpButtonWasPressedThisTick && _jumpCount == 2)
                 {
-                    _rigidbody2D.velocity = _dashForce * inputDirection;
-                    _dashCount--;
-                    _timerDashDelay = TickTimer.CreateFromSeconds(Sandbox, _dashDelay);
-                }
-                // Second Dash
-                else if (dashButtonWasPressedThisTick && _dashCount == 1 && _timerDashDelay.IsExpiredOrNotRunning(Sandbox))
-                {
-                    _rigidbody2D.velocity = _doubleDashForce * inputDirection;
-                    _dashCount--;
+                    _rigidbody2D.linearVelocity = new Vector2(_rigidbody2D.linearVelocity.x, _jumpForce);
+                    _jumpCount--;
+                    _timerDoubleJumpDelay = TickTimer.CreateFromSeconds(Sandbox, _doubleJumpDelay);
                 }
 
-                // Update movement state
-                _isMoving = inputDirection.magnitude > 0.1f;
+                // Second Jump
+                if (jumpButtonWasPressedThisTick && _jumpCount == 1 && _timerDoubleJumpDelay.IsExpiredOrNotRunning(Sandbox))
+                {
+                    _rigidbody2D.linearVelocity = new Vector2(_rigidbody2D.linearVelocity.x, _doubleJumpForce);
+                    _jumpCount--;
+                }
 
-                // Apply the movement velocity to the player
-                _rigidbody2D.velocity += velocity;  // Adding to the velocity to account for dash + movement
-
-                // Store the jump button press status
-                _dashButtonPressed = input.Jump;
+                _isWalking = Mathf.Abs(velocity.x) > 0.1f;
+                transform.Translate(velocity);
+                _jumpButtonPressed = input.Jump;
             }
+        }
+
+        private bool GetIsGrounded()
+        {
+            Collider2D ground = Physics2D.OverlapCircle(_groundChecker.position, _groundCheckOverlapRadius, _groundLayer);
+
+            if (ground == null)
+                return false;
+
+            return true;
         }
     }
 }
