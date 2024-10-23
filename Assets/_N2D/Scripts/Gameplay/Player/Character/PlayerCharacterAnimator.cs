@@ -16,18 +16,18 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Animate
 
         private readonly int PARAM_ANIMATION_SPEED = Animator.StringToHash("IsWalking");
 
-        // public override void NetworkRender()
-        // {
-        //     PlayAnimation();
-        //     FlipPlayer();
-        // }
+        public override void NetworkRender()
+        {
+            PlayAnimation();
+            FlipPlayer();
+        }
 
-        // private void PlayAnimation()
-        // {
-        //     bool isWalking = _movement.IsWalking;
+        private void PlayAnimation()
+        {
+            bool _isMoving = _movement._isMoving;
 
-        //     _animator.SetBool(PARAM_ANIMATION_SPEED, isWalking);
-        // }
+            _animator.SetBool(PARAM_ANIMATION_SPEED, isWalking);
+        }
 
         private void FlipPlayer()
         {

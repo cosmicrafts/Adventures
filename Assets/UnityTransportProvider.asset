@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: UnityTransportProvider
   m_EditorClassIdentifier: 
   _clientProtocol: 2
-  _serverProtocol: 2
+  _serverProtocol: 4
   _parameters:
     connectTimeoutMS: 1000
     maxConnectAttempts: 60
@@ -25,3 +25,8 @@ MonoBehaviour:
     receiveQueueCapacity: 512
     sendQueueCapacity: 512
     maxMessageSize: 1400
+  _useEncryption: 0
+  _serverCertificate: 
+  _serverPrivateKey: 
+  _serverCommonName: 
+  _clientCaCertificate: 

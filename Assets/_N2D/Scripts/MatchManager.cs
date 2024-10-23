@@ -18,6 +18,7 @@ namespace StinkySteak.N2D.Launcher.Prototype
         [SerializeField] private NetworkObject _playerCharacterPrefab;
         private SpawnPoints _spawnpoints;
 
+        [System.Obsolete("Use NewMethodName instead")]
         public override void OnSceneLoaded(NetworkSandbox sandbox)
         {
             List<INetickSceneLoaded> listeners = sandbox.FindObjectsOfType<INetickSceneLoaded>();
@@ -27,7 +28,6 @@ namespace StinkySteak.N2D.Launcher.Prototype
 
             if (!sandbox.IsServer) return;
 
-            // Replacing the deprecated method with the new recommended method
             _spawnpoints = Object.FindFirstObjectByType<SpawnPoints>();
 
             if (_spawnpoints == null)

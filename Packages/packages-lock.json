@@ -16,7 +16,7 @@
       "dependencies": {
         "com.unity.transport": "2.2.1"
       },
-      "hash": "75400be9bd6760d0c7ae9d254ae66ecb00705ab4"
+      "hash": "efc4dca6c362f7c16196a35cfe36db5888671334"
     },
     "com.stinkysteak.netick-timer": {
       "version": "https://github.com/StinkySteak/netick-ticktimer.git",
