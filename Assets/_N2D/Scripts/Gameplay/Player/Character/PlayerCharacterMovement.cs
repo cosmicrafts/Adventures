@@ -9,67 +9,48 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
     public class PlayerCharacterMovement : NetworkBehaviour
     {
         [SerializeField] private Rigidbody2D _rigidbody2D;
-        [SerializeField] private float _moveSpeed;
-        [SerializeField] private float _jumpForce;
-        [SerializeField] private float _doubleJumpForce;
-        [SerializeField] private float _doubleJumpDelay = 0.2f;
-        [Networked] private bool _isGrounded { get; set; }
-        [Networked] private int _jumpCount { get; set; }
-        [Networked] private bool _jumpButtonPressed { get; set; }
-        [Networked] private bool _isWalking { get; set; }
+        [SerializeField] private float _moveSpeed = 5f;
+        [SerializeField] private float _dashForce = 10f;
+        [SerializeField] private float _doubleDashForce = 8f;
+        [SerializeField] private float _dashDelay = 0.2f;
 
-        private TickTimer _timerDoubleJumpDelay;
+        [Networked] private int _dashCount { get; set; }
+        [Networked] private bool _dashButtonPressed { get; set; }
+        [Networked] private bool _isMoving { get; set; }
 
-        [SerializeField] private Transform _groundChecker;
-        [SerializeField] private LayerMask _groundLayer;
-        [SerializeField] private float _groundCheckOverlapRadius = 0.1f;
+        private TickTimer _timerDashDelay;
 
-        public bool IsWalking => _isWalking;
+        public bool IsWalking => _isMoving;
 
         public override void NetworkFixedUpdate()
         {
-            _isGrounded = GetIsGrounded();
-
-            if (_isGrounded)
-            {
-                _jumpCount = 2;
-            }
+            if (_dashCount == 0) _dashCount = 2;
 
             if (FetchInput(out PlayerCharacterInput input))
             {
-                bool jumpButtonWasPressedThisTick = _jumpButtonPressed == false && input.Jump;
+                // Now with vertical movement from the new input field
+                Vector2 inputDirection = new Vector2(input.HorizontalMove, input.VerticalMove).normalized;
+                Vector2 velocity = _moveSpeed * inputDirection * Sandbox.FixedDeltaTime;
 
-                Vector2 velocity = _moveSpeed * input.HorizontalMove * Sandbox.FixedDeltaTime * Vector2.right;
-                
-                // First Jump
-                if (jumpButtonWasPressedThisTick && _jumpCount == 2)
+                bool dashButtonWasPressedThisTick = !_dashButtonPressed && input.Jump;
+
+                if (dashButtonWasPressedThisTick && _dashCount == 2)
                 {
-                    _rigidbody2D.linearVelocity = new Vector2(_rigidbody2D.linearVelocity.x, _jumpForce);
-                    _jumpCount--;
-                    _timerDoubleJumpDelay = TickTimer.CreateFromSeconds(Sandbox, _doubleJumpDelay);
+                    _rigidbody2D.linearVelocity = _dashForce * inputDirection;
+                    _dashCount--;
+                    _timerDashDelay = TickTimer.CreateFromSeconds(Sandbox, _dashDelay);
+                }
+                else if (dashButtonWasPressedThisTick && _dashCount == 1 && _timerDashDelay.IsExpiredOrNotRunning(Sandbox))
+                {
+                    _rigidbody2D.linearVelocity = _doubleDashForce * inputDirection;
+                    _dashCount--;
                 }
 
-                // Second Jump
-                if (jumpButtonWasPressedThisTick && _jumpCount == 1 && _timerDoubleJumpDelay.IsExpiredOrNotRunning(Sandbox))
-                {
-                    _rigidbody2D.linearVelocity = new Vector2(_rigidbody2D.linearVelocity.x, _doubleJumpForce);
-                    _jumpCount--;
-                }
+                _isMoving = inputDirection.magnitude > 0.1f;
 
-                _isWalking = Mathf.Abs(velocity.x) > 0.1f;
-                transform.Translate(velocity);
-                _jumpButtonPressed = input.Jump;
+                _rigidbody2D.linearVelocity += velocity;
+                _dashButtonPressed = input.Jump;
             }
-        }
-
-        private bool GetIsGrounded()
-        {
-            Collider2D ground = Physics2D.OverlapCircle(_groundChecker.position, _groundCheckOverlapRadius, _groundLayer);
-
-            if (ground == null)
-                return false;
-
-            return true;
         }
     }
 }

@@ -24,7 +24,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Animate
 
         private void PlayAnimation()
         {
-            bool _isMoving = _movement._isMoving;
+            bool isWalking = _movement.IsWalking;
 
             _animator.SetBool(PARAM_ANIMATION_SPEED, isWalking);
         }
