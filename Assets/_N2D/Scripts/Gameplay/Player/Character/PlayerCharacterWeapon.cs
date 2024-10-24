@@ -108,11 +108,12 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             result = new ShootingRaycastResult()
             {
                 Point = hit.point,
-                HitObject = hit.collider.transform,
+                HitObject = hit.collider != null ? hit.collider.transform : null // Safely check if collider exists
             };
 
-            return hit;
+            return hit.collider != null; // Return true only if something was hit
         }
+
         public bool ShootLagComp(Vector3 originPoint, Vector3 direction, out ShootingRaycastResult result)
         {
 #if NETICK_LAGCOMP

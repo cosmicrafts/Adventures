@@ -281,7 +281,7 @@ MonoBehaviour:
   _fireRate: 0.1
   _damage: 10
   _distance: 100
-  _weaponOriginPointOffset: 1.5
+  _weaponOriginPointOffset: 0.75
   _hitableLayer:
     serializedVersion: 2
     m_Bits: 192
@@ -462,7 +462,7 @@ GameObject:
   - component: {fileID: 462263737325219087}
   - component: {fileID: 462263737325219084}
   - component: {fileID: 8683862078891888404}
-  m_Layer: 0
+  m_Layer: 7
   m_Name: PlayerSprite
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -529,7 +529,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 6
   m_Sprite: {fileID: 21300000, guid: 7482384297d85349f9cc1a69c84ed06d, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -839,7 +839,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 0}
   m_AnchorMax: {x: 0, y: 0}
-  m_AnchoredPosition: {x: 0, y: 2.001}
+  m_AnchoredPosition: {x: 0, y: 1.53}
   m_SizeDelta: {x: 1920, y: 1080}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!223 &4093771094497650232
@@ -1626,7 +1626,7 @@ Transform:
   m_GameObject: {fileID: 4849864749631592305}
   serializedVersion: 2
   m_LocalRotation: {x: -0, y: -0, z: -0, w: 1}
-  m_LocalPosition: {x: 0.021, y: -0.14700001, z: 0}
+  m_LocalPosition: {x: 0.424, y: -0.01, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
