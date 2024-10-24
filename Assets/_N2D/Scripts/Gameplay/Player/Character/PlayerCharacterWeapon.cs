@@ -20,20 +20,22 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         [SerializeField] private float _distance;
         [SerializeField] private float _weaponOriginPointOffset = 1.5f;
         [SerializeField] private LayerMask _hitableLayer;
-        [SerializeField] private float _ammoReplenishDelay = 2f;
-        [SerializeField] private float _ammoReplenishSpeed = 1f;
-        [SerializeField] private float _maxAmmo = 10f;
+        [SerializeField] private float _energyReplenishDelay = 2f; // Replenish delay after energy is used
+        [SerializeField] private float _energyReplenishSpeed = 1f; // Speed of energy replenishment
+        [SerializeField] private float _maxEnergy = 100f; // Max energy pool
+        [SerializeField] private float _energyCostPerShot = 10f; // Energy cost per shot
+        [SerializeField] private float _energyCostPerAbility = 20f; // Energy cost for abilities
 
         [Networked][Smooth(false)] public float Degree { get; private set; }
         [Networked] private ProjectileHit _lastProjectileHit { get; set; }
         [Networked] private TickTimer _timerFireRate { get; set; }
-        [Networked] private float _ammo { get; set; }
-        [Networked] private TickTimer _timerAmmoReplenish { get; set; }
+        [Networked] private float _energy { get; set; }
+        [Networked] private TickTimer _timerEnergyReplenish { get; set; }
 
         public ProjectileHit LastProjectileHit => _lastProjectileHit;
 
         public event Action OnLastProjectileHitChanged;
-        public event Action OnAmmoChanged;
+        public event Action OnEnergyChanged;
 
         [SerializeField] private RaycastType _raycastType;
 
@@ -43,18 +45,18 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             NetickLagComp
         }
 
-        public float MaxAmmo => _maxAmmo;
-        public float Ammo => _ammo;
+        public float MaxEnergy => _maxEnergy;
+        public float Energy => _energy;
 
-        [OnChanged(nameof(_ammo))]
-        private void OnChangedAmmo(OnChangedData onChangedData)
+        [OnChanged(nameof(_energy))]
+        private void OnChangedEnergy(OnChangedData onChangedData)
         {
-            OnAmmoChanged?.Invoke();
+            OnEnergyChanged?.Invoke();
         }
 
         public override void NetworkStart()
         {
-            _ammo = _maxAmmo;
+            _energy = _maxEnergy; // Initialize the energy pool to max at the start
         }
 
         [OnChanged(nameof(_lastProjectileHit))]
@@ -72,19 +74,20 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         {
             ProcessAim();
             ProcessShooting();
-            ProcessAmmoReplenish();
+            ProcessEnergyReplenish();
         }
 
-        private void ProcessAmmoReplenish()
+        private void ProcessEnergyReplenish()
         {
             if (!IsServer) return;
 
-            if (_timerAmmoReplenish.IsExpired(Sandbox))
+            if (_timerEnergyReplenish.IsExpired(Sandbox))
             {
-                _ammo += Sandbox.FixedDeltaTime * _ammoReplenishSpeed;
+                // Gradually replenish energy over time
+                _energy += Sandbox.FixedDeltaTime * _energyReplenishSpeed;
 
-                if (_ammo >= _maxAmmo)
-                    _ammo = _maxAmmo;
+                if (_energy >= _maxEnergy)
+                    _energy = _maxEnergy;
             }
         }
 
@@ -108,10 +111,10 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             result = new ShootingRaycastResult()
             {
                 Point = hit.point,
-                HitObject = hit.collider != null ? hit.collider.transform : null // Safely check if collider exists
+                HitObject = hit.collider != null ? hit.collider.transform : null
             };
 
-            return hit.collider != null; // Return true only if something was hit
+            return hit.collider != null;
         }
 
         public bool ShootLagComp(Vector3 originPoint, Vector3 direction, out ShootingRaycastResult result)
@@ -131,6 +134,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             return false;
 #endif
         }
+
         private void ProcessShooting()
         {
             if (!FetchInput(out PlayerCharacterInput input)) return;
@@ -141,12 +145,11 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
             if (!IsServer) return;
 
-            if (_ammo <= 0) return;
+            if (_energy < _energyCostPerShot) return; // Check if enough energy to shoot
 
             _timerFireRate = TickTimer.CreateFromSeconds(Sandbox, _fireRate);
 
             Vector2 direction = DegreesToDirection(Degree);
-
             Vector2 originPoint = GetWeaponOriginPoint(direction);
 
             ShootingRaycastResult hitResult = default;
@@ -161,8 +164,8 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
                 isHit = ShootLagComp(originPoint, direction, out hitResult);
             }
 
-            _timerAmmoReplenish = TickTimer.CreateFromSeconds(Sandbox, _ammoReplenishDelay);
-            _ammo--;
+            _timerEnergyReplenish = TickTimer.CreateFromSeconds(Sandbox, _energyReplenishDelay);
+            _energy -= _energyCostPerShot; // Deduct energy for shooting
 
             if (!isHit)
             {

@@ -17,13 +17,13 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
         [SerializeField] private PlayerCharacterHealth _health;
         [SerializeField] private PlayerCharacterWeapon _weapon;
         [SerializeField] private Slider _healthbar;
-        [SerializeField] private Slider _ammobar;
+        [SerializeField] private Slider _energyBar; // Renamed from _ammobar to _energyBar
         private PlayerSession _session;
 
         public override void NetworkStart()
         {
             _health.OnHealthChanged += OnHealthChanged;
-            _weapon.OnAmmoChanged += OnAmmoChanged;
+            _weapon.OnEnergyChanged += OnEnergyChanged; // Renamed OnAmmoChanged to OnEnergyChanged
 
             GlobalPlayerManager globalPlayerManager = Sandbox.GetComponent<GlobalPlayerManager>();
 
@@ -43,10 +43,10 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
             _textNametag.SetText(_session.Nickname);
         }
 
-        private void OnAmmoChanged()
+        private void OnEnergyChanged() // Renamed to reflect the energy system
         {
-            _ammobar.maxValue = _weapon.MaxAmmo;
-            _ammobar.value = _weapon.Ammo;
+            _energyBar.maxValue = _weapon.MaxEnergy; // Renamed MaxAmmo to MaxEnergy
+            _energyBar.value = _weapon.Energy; // Renamed Ammo to Energy
         }
 
         private void OnHealthChanged()
