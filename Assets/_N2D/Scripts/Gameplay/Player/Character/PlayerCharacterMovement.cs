@@ -18,7 +18,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
         [Networked] private Vector2 _dashDirection { get; set; } // Direction of the current dash
         [SerializeField] public PlayerCharacterWeapon _weapon;  // Reference to the weapon to get aiming direction
 
-        public bool IsWalking => !_isDashing;
+        public bool IsWalking => _rigidbody2D.linearVelocity.magnitude > 0.1f;
 
         public override void NetworkFixedUpdate()
         {
