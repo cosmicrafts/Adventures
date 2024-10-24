@@ -164,12 +164,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _rigidbody2D: {fileID: 462263736606742650}
   _moveSpeed: 5
-  _dashForce: 8
-  _doubleDashForce: 4
-  _dashDelay: 0.2
-  <_dashCount>k__BackingField: 0
-  <_dashButtonPressed>k__BackingField: 0
-  <_isMoving>k__BackingField: 0
+  _dashForce: 20
+  _dashCooldown: 0.5
+  <_isDashing>k__BackingField: 0
+  <_canDash>k__BackingField: 1
+  <_dashDirection>k__BackingField: {x: 0, y: 0}
+  _weapon: {fileID: -187163571796443866}
 --- !u!114 &-187163571796443866
 MonoBehaviour:
   m_ObjectHideFlags: 0

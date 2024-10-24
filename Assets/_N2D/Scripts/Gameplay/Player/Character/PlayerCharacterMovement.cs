@@ -1,8 +1,8 @@
 using Netick.Unity;
 using Netick;
 using StinkySteak.N2D.Gameplay.PlayerInput;
+using StinkySteak.N2D.Gameplay.Player.Character.Weapon;  // To access weapon's rotation
 using UnityEngine;
-using StinkySteak.Netick.Timer;
 
 namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
 {
@@ -10,47 +10,81 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
     {
         [SerializeField] private Rigidbody2D _rigidbody2D;
         [SerializeField] private float _moveSpeed = 5f;
-        [SerializeField] private float _dashForce = 10f;
-        [SerializeField] private float _doubleDashForce = 8f;
-        [SerializeField] private float _dashDelay = 0.2f;
+        [SerializeField] private float _dashForce = 10f;        // Dash force magnitude
+        [SerializeField] private float _dashCooldown = 0.5f;    // Cooldown between dashes
 
-        [Networked] private int _dashCount { get; set; }
-        [Networked] private bool _dashButtonPressed { get; set; }
-        [Networked] private bool _isMoving { get; set; }
+        [Networked] private bool _isDashing { get; set; }       // To track if dashing is in progress
+        [Networked] private bool _canDash { get; set; } = true; // To track if dash is allowed
+        [Networked] private Vector2 _dashDirection { get; set; } // Direction of the current dash
+        [SerializeField] public PlayerCharacterWeapon _weapon;  // Reference to the weapon to get aiming direction
 
-        private TickTimer _timerDashDelay;
-
-        public bool IsWalking => _isMoving;
+        public bool IsWalking => !_isDashing;
 
         public override void NetworkFixedUpdate()
         {
-            if (_dashCount == 0) _dashCount = 2;
-
             if (FetchInput(out PlayerCharacterInput input))
             {
-                // Now with vertical movement from the new input field
-                Vector2 inputDirection = new Vector2(input.HorizontalMove, input.VerticalMove).normalized;
-                Vector2 velocity = _moveSpeed * inputDirection * Sandbox.FixedDeltaTime;
-
-                bool dashButtonWasPressedThisTick = !_dashButtonPressed && input.Jump;
-
-                if (dashButtonWasPressedThisTick && _dashCount == 2)
+                if (_isDashing)
                 {
-                    _rigidbody2D.linearVelocity = _dashForce * inputDirection;
-                    _dashCount--;
-                    _timerDashDelay = TickTimer.CreateFromSeconds(Sandbox, _dashDelay);
+                    // Continue applying dash velocity if the dash is in progress
+                    ApplyDash();
                 }
-                else if (dashButtonWasPressedThisTick && _dashCount == 1 && _timerDashDelay.IsExpiredOrNotRunning(Sandbox))
+                else
                 {
-                    _rigidbody2D.linearVelocity = _doubleDashForce * inputDirection;
-                    _dashCount--;
+                    // Handle normal movement using WASD
+                    Vector2 inputDirection = new Vector2(input.HorizontalMove, input.VerticalMove).normalized;
+                    _rigidbody2D.linearVelocity = inputDirection.magnitude > 0.1f ? _moveSpeed * inputDirection : Vector2.zero;
+
+                    // Handle dash initiation
+                    if (input.Jump && _canDash)
+                    {
+                        StartDash();
+                    }
                 }
-
-                _isMoving = inputDirection.magnitude > 0.1f;
-
-                _rigidbody2D.linearVelocity = _moveSpeed * inputDirection;
-                _dashButtonPressed = input.Jump;
             }
+        }
+
+        private void StartDash()
+        {
+            // Calculate the dash direction based on the weapon's current rotation (degree)
+            _dashDirection = GetDashDirectionFromWeapon();
+
+            // Apply dash force instantly in the direction the weapon is pointing
+            _rigidbody2D.linearVelocity = _dashDirection * _dashForce;
+
+            // Update dash state
+            _isDashing = true;
+            _canDash = false;
+
+            // Reset dash after cooldown
+            Sandbox.StartCoroutine(DashCooldownCoroutine());
+        }
+
+        private void ApplyDash()
+        {
+            // Simply retain the applied dash velocity until the dash is finished
+            _rigidbody2D.linearVelocity = _dashDirection * _dashForce;
+        }
+
+        private System.Collections.IEnumerator DashCooldownCoroutine()
+        {
+            yield return new WaitForSeconds(_dashCooldown);
+
+            // End the dash and allow dashing again after the cooldown
+            _isDashing = false;
+            _canDash = true;
+        }
+
+        private Vector2 GetDashDirectionFromWeapon()
+        {
+            // Get the weapon's aiming degree (rotation in degrees)
+            float weaponDegree = _weapon.Degree;
+
+            // Convert degree to a direction vector (x, y)
+            float radians = weaponDegree * Mathf.Deg2Rad;
+            Vector2 dashDirection = new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+
+            return dashDirection.normalized;  // Return normalized direction
         }
     }
 }
