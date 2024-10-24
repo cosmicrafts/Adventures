@@ -166,6 +166,7 @@ MonoBehaviour:
   _moveSpeed: 5
   _dashForce: 20
   _dashCooldown: 0.5
+  _energyCostPerDash: 20
   <_isDashing>k__BackingField: 0
   <_canDash>k__BackingField: 1
   <_dashDirection>k__BackingField: {x: 0, y: 0}
@@ -238,6 +239,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   <_health>k__BackingField: 0
+  <_shield>k__BackingField: 0
+  _healthRegenRate: 40
+  _shieldRegenRate: 40
+  _regenDelay: 0.5
 --- !u!114 &6290587020520711107
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -254,8 +259,10 @@ MonoBehaviour:
   _renderer: {fileID: 462263737325219084}
   _materialDefault: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   _materialOnHit: {fileID: 2100000, guid: 781b6b37dca04a241a63eca26796b228, type: 2}
+  _materialOnShieldHit: {fileID: 2100000, guid: 781b6b37dca04a241a63eca26796b228, type: 2}
   _materialOnHitLifetime: 0.2
   _vfxBloodPrefab: {fileID: 7311190397742819428, guid: edc41a59079b97d4d9b628cf09749713, type: 3}
+  _vfxShieldHitPrefab: {fileID: 7311190397742819428, guid: 950cb1500c02af63db1769dfe5e342ea, type: 3}
 --- !u!114 &5794989081546542482
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -272,6 +279,7 @@ MonoBehaviour:
   _health: {fileID: 3541287404522835111}
   _weapon: {fileID: -187163571796443866}
   _healthbar: {fileID: 508160093412112954}
+  _shieldbar: {fileID: 4673852616754381821}
   _energyBar: {fileID: 3451981288234977910}
 --- !u!114 &9011296098682904991
 MonoBehaviour:
@@ -918,6 +926,14 @@ PrefabInstance:
       propertyPath: m_AnchorMax.y
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 1452095340580813333, guid: b8bc32639428bc8d38123d87692db773, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 1452095340580813333, guid: b8bc32639428bc8d38123d87692db773, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 6082937098884805140, guid: b8bc32639428bc8d38123d87692db773, type: 3}
       propertyPath: m_Pivot.x
       value: 0.5
@@ -1030,6 +1046,17 @@ RectTransform:
 --- !u!114 &3451981288234977910 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 5857298935558922742, guid: b8bc32639428bc8d38123d87692db773, type: 3}
+  m_PrefabInstance: {fileID: 9128419209209572224}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &4673852616754381821 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 4499787453588383869, guid: b8bc32639428bc8d38123d87692db773, type: 3}
   m_PrefabInstance: {fileID: 9128419209209572224}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}

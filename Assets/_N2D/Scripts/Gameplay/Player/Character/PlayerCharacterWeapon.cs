@@ -24,7 +24,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         [SerializeField] private float _energyReplenishSpeed = 1f; // Speed of energy replenishment
         [SerializeField] private float _maxEnergy = 100f; // Max energy pool
         [SerializeField] private float _energyCostPerShot = 10f; // Energy cost per shot
-        [SerializeField] private float _energyCostPerAbility = 20f; // Energy cost for abilities
+       // [SerializeField] private float _energyCostPerAbility = 20f; // Energy cost for abilities
 
         [Networked][Smooth(false)] public float Degree { get; private set; }
         [Networked] private ProjectileHit _lastProjectileHit { get; set; }
@@ -234,6 +234,14 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             float y = Mathf.Sin(radians);
 
             return new Vector2(x, y);
+        }
+
+        public void DeductEnergy(float amount)
+        {
+            _energy -= amount;
+            if (_energy < 0) _energy = 0;
+
+            OnEnergyChanged?.Invoke();
         }
     }
 }

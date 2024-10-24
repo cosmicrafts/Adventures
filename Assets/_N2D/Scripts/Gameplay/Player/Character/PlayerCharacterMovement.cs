@@ -12,11 +12,14 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
         [SerializeField] private float _moveSpeed = 5f;
         [SerializeField] private float _dashForce = 10f;        // Dash force magnitude
         [SerializeField] private float _dashCooldown = 0.5f;    // Cooldown between dashes
+        [SerializeField] private float _energyCostPerDash = 20f; // Energy cost for dashing
 
         [Networked] private bool _isDashing { get; set; }       // To track if dashing is in progress
         [Networked] private bool _canDash { get; set; } = true; // To track if dash is allowed
         [Networked] private Vector2 _dashDirection { get; set; } // Direction of the current dash
         [SerializeField] public PlayerCharacterWeapon _weapon;  // Reference to the weapon to get aiming direction
+
+        private PlayerCharacterWeapon _playerWeapon;
 
         public bool IsWalking => _rigidbody2D.linearVelocity.magnitude > 0.1f;
 
@@ -36,7 +39,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
                     _rigidbody2D.linearVelocity = inputDirection.magnitude > 0.1f ? _moveSpeed * inputDirection : Vector2.zero;
 
                     // Handle dash initiation
-                    if (input.Jump && _canDash)
+                    if (input.Jump && _canDash && _weapon.Energy >= _energyCostPerDash) // Check energy before dashing
                     {
                         StartDash();
                     }
@@ -51,6 +54,9 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
 
             // Apply dash force instantly in the direction the weapon is pointing
             _rigidbody2D.linearVelocity = _dashDirection * _dashForce;
+
+            // Deduct energy for dashing
+            _weapon.DeductEnergy(_energyCostPerDash); // Ensure this method is added to handle energy deduction
 
             // Update dash state
             _isDashing = true;
