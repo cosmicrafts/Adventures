@@ -23,6 +23,10 @@ namespace StinkySteak.N2D.Gameplay.Bullet.VFX
             _bulletDirection = bulletDirection;
             _isHitPlayer = isHitPlayer;
 
+            // Set the rotation of the bullet based on its direction
+            float angle = Mathf.Atan2(_bulletDirection.y, _bulletDirection.x) * Mathf.Rad2Deg;
+            transform.rotation = Quaternion.Euler(0, 0, angle);
+
             _timerLifetime = TickTimer.CreateFromSeconds(networkSandbox, _lifetime);
         }
 
@@ -44,20 +48,21 @@ namespace StinkySteak.N2D.Gameplay.Bullet.VFX
                 return;
             }
 
+            // Move the bullet forward in the direction of the _bulletDirection
             transform.position += (Vector3)_bulletDirection * Time.deltaTime * _bulletSpeed;
         }
 
-private void Destroy()
-{
-    if (!_isHitPlayer)
-    {
-        Sandbox.Instantiate(_bulletImpactVFX, transform.position, Quaternion.identity);
-    }
+        private void Destroy()
+        {
+            if (!_isHitPlayer)
+            {
+                // Instantiate bullet impact VFX
+                Sandbox.Instantiate(_bulletImpactVFX, transform.position, Quaternion.identity);
+            }
 
-    // Corrected the spelling to DetachBehaviour
-    Sandbox.DetachBehaviour(this);
-    Destroy(gameObject);
-}
-
+            // Detach and destroy the bullet
+            Sandbox.DetachBehaviour(this);
+            Destroy(gameObject);
+        }
     }
 }

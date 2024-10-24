@@ -430,7 +430,7 @@ GameObject:
   - component: {fileID: 1778773221}
   - component: {fileID: 1778773220}
   m_Layer: 0
-  m_Name: Spawpoints
+  m_Name: Spawnpoints
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -852,10 +852,10 @@ SceneRoots:
   m_ObjectHideFlags: 0
   m_Roots:
   - {fileID: 3873675673102285874}
-  - {fileID: 1163843128}
   - {fileID: 1509935611}
   - {fileID: 1124302919675292749}
   - {fileID: 1007618482}
   - {fileID: 9069484058149003593}
   - {fileID: 115487531032875980}
   - {fileID: 1778773221}
+  - {fileID: 1163843128}
