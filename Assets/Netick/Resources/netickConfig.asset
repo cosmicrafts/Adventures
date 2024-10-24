@@ -31,12 +31,18 @@ MonoBehaviour:
     FileName: Assets/Dreno.prefab
     GO: {fileID: 462263736606742655, guid: 30a95f1efa5fc6ca798966e89d6efec7, type: 3}
     Id: 3
+  - Obj: {fileID: 462263736606742652, guid: 08e4cd0fd46b7819b9da44c2bd55b98c, type: 3}
+    InstanceId: 82230
+    Name: Marauder
+    FileName: Assets/Marauder.prefab
+    GO: {fileID: 462263736606742655, guid: 08e4cd0fd46b7819b9da44c2bd55b98c, type: 3}
+    Id: 4
   - Obj: {fileID: 462263736606742652, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
     InstanceId: 78680
     Name: Raider
     FileName: Assets/Raider.prefab
     GO: {fileID: 462263736606742655, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
-    Id: 4
+    Id: 5
   TickRate: 45
   MaxPlayers: 6
   MaxObjects: 512
