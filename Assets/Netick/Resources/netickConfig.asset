@@ -31,6 +31,12 @@ MonoBehaviour:
     FileName: Assets/Dreno.prefab
     GO: {fileID: 462263736606742655, guid: 30a95f1efa5fc6ca798966e89d6efec7, type: 3}
     Id: 3
+  - Obj: {fileID: 462263736606742652, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
+    InstanceId: 78680
+    Name: Raider
+    FileName: Assets/Raider.prefab
+    GO: {fileID: 462263736606742655, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
+    Id: 4
   TickRate: 45
   MaxPlayers: 6
   MaxObjects: 512
