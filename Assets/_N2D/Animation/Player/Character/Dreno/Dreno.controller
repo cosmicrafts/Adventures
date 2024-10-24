@@ -46,7 +46,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 81cf5975804e6814683f8151e9764db1, type: 2}
+  m_Motion: {fileID: 7400000, guid: 769e04d059b4f70ac961c5094fcc5e04, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
@@ -58,7 +58,7 @@ AnimatorController:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: PlayerCharacter
+  m_Name: Dreno
   serializedVersion: 5
   m_AnimatorParameters:
   - m_Name: IsWalking
@@ -126,7 +126,7 @@ AnimatorState:
   m_MirrorParameterActive: 0
   m_CycleOffsetParameterActive: 0
   m_TimeParameterActive: 0
-  m_Motion: {fileID: 7400000, guid: 94a14d3bdc0fa424c929d19ed4996472, type: 2}
+  m_Motion: {fileID: 7400000, guid: 7c6b65bb25b51344a805ad4d765f284c, type: 2}
   m_Tag: 
   m_SpeedParameter: 
   m_MirrorParameter: 
