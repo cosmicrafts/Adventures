@@ -14,45 +14,45 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Prefabs:
   - Obj: {fileID: 462263736606742652, guid: 55f0b1aa9556a4f43b7f88a7451f34cd, type: 3}
-    InstanceId: 28196
+    InstanceId: 28248
     Name: Player
     FileName: Assets/_N2D/Prefabs/Gameplay/Player/Character/Player.prefab
     GO: {fileID: 462263736606742655, guid: 55f0b1aa9556a4f43b7f88a7451f34cd, type: 3}
     Id: 1
   - Obj: {fileID: 68535350912409233, guid: 65efd385498aa4347b106615a6c8e875, type: 3}
-    InstanceId: 28192
+    InstanceId: 28244
     Name: PlayerSession
     FileName: Assets/_N2D/Prefabs/Gameplay/Player/Session/PlayerSession.prefab
     GO: {fileID: 68535350912409235, guid: 65efd385498aa4347b106615a6c8e875, type: 3}
     Id: 2
   - Obj: {fileID: 462263736606742652, guid: 30a95f1efa5fc6ca798966e89d6efec7, type: 3}
-    InstanceId: 41916
+    InstanceId: 29170
     Name: Dreno
     FileName: Assets/Dreno.prefab
     GO: {fileID: 462263736606742655, guid: 30a95f1efa5fc6ca798966e89d6efec7, type: 3}
     Id: 3
   - Obj: {fileID: 462263736606742652, guid: 08e4cd0fd46b7819b9da44c2bd55b98c, type: 3}
-    InstanceId: 82230
+    InstanceId: 29174
     Name: Marauder
     FileName: Assets/Marauder.prefab
     GO: {fileID: 462263736606742655, guid: 08e4cd0fd46b7819b9da44c2bd55b98c, type: 3}
     Id: 4
   - Obj: {fileID: 462263736606742652, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
-    InstanceId: 78680
+    InstanceId: 29178
     Name: Raider
     FileName: Assets/Raider.prefab
     GO: {fileID: 462263736606742655, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
     Id: 5
   TickRate: 45
-  MaxPlayers: 6
-  MaxObjects: 512
+  MaxPlayers: 128
+  MaxObjects: 1024
   MaxSendableDataSize: 50000
   StateAllocatorBlockSize: 131072
   MetaAllocatorBlockSize: 1048576
   ReceiveBufferSize: 32768
   SendBufferSize: 16384
   Timeout: 10
-  MaxPredictedTicks: 64
+  MaxPredictedTicks: 512
   ServerDivisor: 1
   ClientDivisor: 1
   PhysicsPrediction: 1
@@ -61,7 +61,7 @@ MonoBehaviour:
   InvokeUpdate: 1
   RenderInvokeOrder: 1
   MaxAdditiveScenes: 4
-  InputReuseAtLowFPS: 0
+  InputReuseAtLowFPS: 1
   EnableLogging: 1
   ServerSimulatedLossOut: 0
   ClientSimulatedLossOut: 0

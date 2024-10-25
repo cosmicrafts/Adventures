@@ -161,7 +161,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             if (TryGetComponentOrInParent(hitResult.HitObject, out PlayerCharacterHealth playerCharacterHealth))
             {
                 isHitPlayer = true;
-                playerCharacterHealth.DeductShieldAndHealth(_damage);
+                playerCharacterHealth.DeductShieldAndHealth(_damage, transform);
             }
 
             _lastProjectileHit = new ProjectileHit()

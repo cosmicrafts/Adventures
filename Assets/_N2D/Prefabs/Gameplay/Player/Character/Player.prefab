@@ -236,12 +236,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _maxHealth: 100
   _maxShield: 50
-  _shieldReplenishDelay: 0
-  _shieldReplenishSpeed: 12
-  _healthReplenishDelay: 0
-  _healthReplenishSpeed: 8
+  _shieldReplenishDelay: 4
+  _shieldReplenishSpeed: 4
+  _healthReplenishDelay: 1
+  _healthReplenishSpeed: 4
+  _reflectPercentage: 0.9
+  _regenerativeShieldEnergyCost: 20
+  _regenerativeShieldBoost: 0.1
+  _instantShieldRegeneration: 0.9
+  _regenerativeShieldDuration: 3
   <_health>k__BackingField: 0
   <_shield>k__BackingField: 0
+  cooldownUIManager: {fileID: 1082884131291931743}
 --- !u!114 &6290587020520711107
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -1052,6 +1058,17 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &1082884131291931743 stripped
+MonoBehaviour:
+  m_CorrespondingSourceObject: {fileID: 8190224222138257375, guid: b8bc32639428bc8d38123d87692db773, type: 3}
+  m_PrefabInstance: {fileID: 9128419209209572224}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9eead248704fa91b5b074272c46a9e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!224 &3081667175771740564 stripped

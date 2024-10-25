@@ -10,10 +10,9 @@ GameObject:
   m_Component:
   - component: {fileID: 7311190397742819427}
   - component: {fileID: 7311190397742819424}
-  - component: {fileID: 2618318901576221945}
   - component: {fileID: 4506648338003198978}
   m_Layer: 0
-  m_Name: VFX_Shield
+  m_Name: BackupVFX_Shield
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -29,8 +28,8 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
-  m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
-  m_ConstrainProportionsScale: 1
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
@@ -46,19 +45,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 986dab80cd884c645a532ba9a5fac175, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _lifetime: 0.2
---- !u!114 &2618318901576221945
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 7311190397742819428}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 94226a5e943502cbba3e932e37c74e87, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  _lifetime: 1
 --- !u!212 &4506648338003198978
 SpriteRenderer:
   m_ObjectHideFlags: 0

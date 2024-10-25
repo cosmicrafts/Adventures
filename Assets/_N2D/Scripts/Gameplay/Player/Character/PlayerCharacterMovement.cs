@@ -19,6 +19,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
         [Networked] private bool _canDash { get; set; } = true; // To track if dash is allowed
         [Networked] private Vector2 _dashDirection { get; set; } // Direction of the current dash
         [SerializeField] public PlayerCharacterWeapon _weapon;  // Reference to the weapon to get aiming direction
+        [Networked] private Vector2 _currentTargetPosition { get; set; } = Vector2.zero;
 
         private PlayerEnergySystem _energySystem; // Reference to the energy system
 
@@ -34,29 +35,56 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
             }
         }
 
-        public override void NetworkFixedUpdate()
+    public override void NetworkFixedUpdate()
+{
+    if (FetchInput(out PlayerCharacterInput input))
+    {
+        // Check if a new target position has been set (right-click)
+        if (input.TargetPosition != Vector2.zero)
         {
-            if (FetchInput(out PlayerCharacterInput input))
-            {
-                if (_isDashing)
-                {
-                    // Continue applying dash velocity if the dash is in progress
-                    ApplyDash();
-                }
-                else
-                {
-                    // Handle normal movement using WASD
-                    Vector2 inputDirection = new Vector2(input.HorizontalMove, input.VerticalMove).normalized;
-                    _rigidbody2D.linearVelocity = inputDirection.magnitude > 0.1f ? _moveSpeed * inputDirection : Vector2.zero;
-
-                    // Handle dash initiation
-                    if (input.Jump && _canDash && _energySystem.Energy >= _energyCostPerDash) // Check energy from energy system before dashing
-                    {
-                        StartDash();
-                    }
-                }
-            }
+            _currentTargetPosition = input.TargetPosition;
         }
+
+        // Prioritize dash input regardless of movement state
+        if (input.Jump && _canDash && _energySystem.Energy >= _energyCostPerDash)
+        {
+            StartDash();
+            return; // Exit early to prioritize dash over other movement
+        }
+
+        if (_isDashing)
+        {
+            ApplyDash();
+        }
+        else if (_currentTargetPosition != Vector2.zero) // Move toward the stored target position
+        {
+            MoveTowardTarget(_currentTargetPosition);
+        }
+        else
+        {
+            // Regular WASD movement
+            Vector2 inputDirection = new Vector2(input.HorizontalMove, input.VerticalMove).normalized;
+            _rigidbody2D.linearVelocity = inputDirection.magnitude > 0.1f ? _moveSpeed * inputDirection : Vector2.zero;
+        }
+    }
+}
+
+
+    private void MoveTowardTarget(Vector2 targetPosition)
+    {
+        Vector2 direction = (targetPosition - (Vector2)transform.position).normalized;
+        _rigidbody2D.linearVelocity = direction * _moveSpeed;
+
+        // Stop movement and reset the target once close enough
+        if (Vector2.Distance(transform.position, targetPosition) < 0.1f)
+        {
+            _rigidbody2D.linearVelocity = Vector2.zero;
+            _currentTargetPosition = Vector2.zero; // Clear the target
+        }
+    }
+
+
+
 
         private void StartDash()
         {

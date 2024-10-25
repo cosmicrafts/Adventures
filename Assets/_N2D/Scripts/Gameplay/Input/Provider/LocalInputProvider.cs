@@ -24,21 +24,26 @@ namespace StinkySteak.N2D.Gameplay.PlayerInput
 
         public override void OnInput(NetworkSandbox sandbox)
         {
-            // Initialize the input struct
             PlayerCharacterInput input = new PlayerCharacterInput();
-            
-            // Capture horizontal and vertical movement input
-            input.HorizontalMove = Input.GetAxis("Horizontal");  // A/D or Left/Right arrow
-            input.VerticalMove = Input.GetAxis("Vertical");      // W/S or Up/Down arrow
-            
-            // Capture jump, look direction, and firing input
+
+            // Existing input handling...
+            input.HorizontalMove = Input.GetAxis("Horizontal");
+            input.VerticalMove = Input.GetAxis("Vertical");
             input.Jump = Input.GetKey(KeyCode.Space);
             input.LookDegree = GetLookDegree();
             input.IsFiring = Input.GetKey(KeyCode.Mouse0);
+            input.ActivateRegenerativeShield = Input.GetKey(KeyCode.Q);
 
-            // Set the input in the sandbox
+            // Capture right-click target position for movement
+            if (Input.GetKey(KeyCode.Mouse1))
+            {
+                Vector2 targetPosition = Camera.main.ScreenToWorldPoint(Input.mousePosition);
+                input.TargetPosition = targetPosition;
+            }
+
             sandbox.SetInput(input);
         }
+
 
         // Calculate the look direction in degrees based on mouse position
         private float GetLookDegree()
