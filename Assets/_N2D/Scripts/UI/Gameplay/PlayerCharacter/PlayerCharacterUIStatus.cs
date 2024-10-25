@@ -1,7 +1,8 @@
 using Netick;
 using Netick.Unity;
 using StinkySteak.N2D.Gameplay.Player.Character.Health;
-using StinkySteak.N2D.Gameplay.Player.Character.Energy; // Import the energy system
+using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
+using StinkySteak.N2D.Gameplay.Player.Character.Energy;
 using StinkySteak.N2D.Gameplay.Player.Session;
 using StinkySteak.N2D.Gameplay.PlayerManager.Global;
 using TMPro;
@@ -15,17 +16,18 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
         [SerializeField] private TMP_Text _textNametag;
 
         [SerializeField] private PlayerCharacterHealth _health;
-        [SerializeField] private PlayerEnergySystem _energySystem; // Use PlayerEnergySystem instead of PlayerCharacterWeapon
+        [SerializeField] private PlayerCharacterWeapon _weapon;
         [SerializeField] private Slider _healthbar;
-        [SerializeField] private Slider _shieldbar; // New shield slider
-        [SerializeField] private Slider _energyBar; // Renamed from _ammobar to _energyBar
+        [SerializeField] private Slider _shieldbar;
+        [SerializeField] private PlayerEnergySystem _energySystem;
+        [SerializeField] private Slider _energyBar;
         private PlayerSession _session;
 
         public override void NetworkStart()
         {
             _health.OnHealthChanged += OnHealthChanged;
-            _health.OnShieldChanged += OnShieldChanged; // Subscribe to shield changes
-            _energySystem.OnEnergyChanged += OnEnergyChanged; // Listen to energy changes
+            _health.OnShieldChanged += OnShieldChanged;
+            _energySystem.OnEnergyChanged += OnEnergyChanged;
 
             GlobalPlayerManager globalPlayerManager = Sandbox.GetComponent<GlobalPlayerManager>();
 
@@ -45,22 +47,22 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
             _textNametag.SetText(_session.Nickname);
         }
 
-        private void OnEnergyChanged() // Renamed to reflect the energy system
+        private void OnEnergyChanged()
         {
-            _energyBar.maxValue = _energySystem.MaxEnergy; // Use energy system's MaxEnergy
-            _energyBar.value = _energySystem.Energy; // Use energy system's Energy
+            _energyBar.maxValue = _energySystem.MaxEnergy;
+            _energyBar.value = _energySystem.Energy;
         }
 
         private void OnHealthChanged()
         {
-            _healthbar.maxValue = _health.MAX_HEALTH;
+            _healthbar.maxValue = _health.MaxHealth;
             _healthbar.value = _health.Health;
         }
 
-        private void OnShieldChanged() // New method to update shield bar
+        private void OnShieldChanged()
         {
-            _shieldbar.maxValue = _health.MAX_SHIELD; // Set max shield value
-            _shieldbar.value = _health.Shield; // Update shield value
+            _shieldbar.maxValue = _health.MaxShield;
+            _shieldbar.value = _health.Shield;
         }
     }
 }

@@ -1,72 +1,37 @@
-using Netick.Unity;
 using Netick;
+using Netick.Unity;
 using StinkySteak.Netick.Timer;
-using System;
 using UnityEngine;
+using System;
 
 namespace StinkySteak.N2D.Gameplay.Player.Character.Health
 {
     public class PlayerCharacterHealth : NetworkBehaviour
     {
-        [Networked] private int _health { get; set; }
-        [Networked] private int _shield { get; set; }
+        [SerializeField] private float _maxHealth = 100f;               // Maximum health pool
+        [SerializeField] private float _maxShield = 50f;                // Maximum shield pool
+        [SerializeField] private float _shieldReplenishDelay = 2f;      // Delay before shield replenishment starts
+        [SerializeField] private float _shieldReplenishSpeed = 1f;      // Speed at which shield replenishes
+        [SerializeField] private float _healthReplenishDelay = 2f;      // Delay before health replenishment starts
+        [SerializeField] private float _healthReplenishSpeed = 1f;      // Speed at which health replenishes
 
-        public int MAX_HEALTH = 100;
-        public int MAX_SHIELD = 50;
+        [Networked] private float _health { get; set; }                 // Current health value
+        [Networked] private float _shield { get; set; }                 // Current shield value
+        [Networked] private TickTimer _timerHealthReplenish { get; set; }
+        [Networked] private TickTimer _timerShieldReplenish { get; set; }
+
+        public float MaxHealth => _maxHealth;
+        public float Health => _health;
+        public float MaxShield => _maxShield;
+        public float Shield => _shield;
 
         public event Action OnHealthChanged;
         public event Action OnShieldChanged;
-        public event Action OnHealthReduced;
-
-        public int Health => _health;
-        public int Shield => _shield;
-
-        public override void NetworkStart()
-        {
-            // Ensure both health and shield are at max at the start
-            _health = MAX_HEALTH;
-            _shield = MAX_SHIELD;
-        }
-
-        public void ReduceHealth(int amount)
-        {
-            // Apply damage to shield first
-            if (_shield > 0)
-            {
-                _shield -= amount;
-
-                if (_shield < 0)
-                {
-                    int remainingDamage = -_shield;
-                    _shield = 0;
-                    _health -= remainingDamage;
-                }
-            }
-            else
-            {
-                _health -= amount;
-            }
-
-            // Trigger health reduction event
-            if (_health <= 0)
-            {
-                Sandbox.Destroy(Object); // Destroy player object if health is 0
-            }
-
-            // Trigger the health and shield changed events
-            OnHealthChanged?.Invoke();
-            OnShieldChanged?.Invoke();
-        }
 
         [OnChanged(nameof(_health))]
         private void OnChangedHealth(OnChangedData onChangedData)
         {
             OnHealthChanged?.Invoke();
-
-            if (_health < onChangedData.GetPreviousValue<int>())
-            {
-                OnHealthReduced?.Invoke();
-            }
         }
 
         [OnChanged(nameof(_shield))]
@@ -75,9 +40,91 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
             OnShieldChanged?.Invoke();
         }
 
+        public override void NetworkStart()
+        {
+            _health = _maxHealth;  // Initialize health to the max value
+            _shield = _maxShield;  // Initialize shield to the max value
+        }
+
         public override void NetworkFixedUpdate()
         {
-            // No regeneration logic
+            ProcessHealthReplenish();
+            ProcessShieldReplenish();
+        }
+
+        private void ProcessHealthReplenish()
+        {
+            if (!IsServer) return;
+
+            if (_timerHealthReplenish.IsExpired(Sandbox))
+            {
+                // Gradually replenish health over time
+                _health += Sandbox.FixedDeltaTime * _healthReplenishSpeed;
+
+                if (_health >= _maxHealth)
+                    _health = _maxHealth;
+            }
+        }
+
+        private void ProcessShieldReplenish()
+        {
+            if (!IsServer) return;
+
+            if (_timerShieldReplenish.IsExpired(Sandbox))
+            {
+                // Gradually replenish shield over time
+                _shield += Sandbox.FixedDeltaTime * _shieldReplenishSpeed;
+
+                if (_shield >= _maxShield)
+                    _shield = _maxShield;
+            }
+        }
+
+        public void DeductShieldAndHealth(float damageAmount)
+        {
+            // First, apply damage to the shield
+            if (_shield > 0)
+            {
+                float remainingDamage = damageAmount - _shield;
+                _shield -= damageAmount;
+
+                if (_shield < 0)
+                    _shield = 0;
+
+                OnShieldChanged?.Invoke();
+
+                // If the shield is depleted, apply the remaining damage to health
+                if (remainingDamage > 0)
+                {
+                    DeductHealth(remainingDamage);
+                }
+                else
+                {
+                    // Reset the shield replenishment delay
+                    _timerShieldReplenish = TickTimer.CreateFromSeconds(Sandbox, _shieldReplenishDelay);
+                }
+            }
+            else
+            {
+                // No shield, apply all damage to health
+                DeductHealth(damageAmount);
+            }
+        }
+
+        public void DeductHealth(float amount)
+        {
+            _health -= amount;
+
+            if (_health <= 0)
+            {
+                Sandbox.Destroy(Object);
+                return;
+            }
+
+            // Reset the health replenishment delay
+            _timerHealthReplenish = TickTimer.CreateFromSeconds(Sandbox, _healthReplenishDelay);
+
+            OnHealthChanged?.Invoke();
         }
     }
 }
