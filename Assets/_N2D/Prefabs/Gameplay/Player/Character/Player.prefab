@@ -172,6 +172,7 @@ MonoBehaviour:
   <_canDash>k__BackingField: 1
   <_dashDirection>k__BackingField: {x: 0, y: 0}
   _weapon: {fileID: -187163571796443866}
+  <_currentTargetPosition>k__BackingField: {x: 0, y: 0}
 --- !u!114 &-187163571796443866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -241,7 +242,7 @@ MonoBehaviour:
   _healthReplenishDelay: 1
   _healthReplenishSpeed: 4
   _reflectPercentage: 0.9
-  _regenerativeShieldEnergyCost: 20
+  _regenerativeShieldEnergyCost: 40
   _regenerativeShieldBoost: 0.1
   _instantShieldRegeneration: 0.9
   _regenerativeShieldDuration: 3
@@ -285,8 +286,6 @@ MonoBehaviour:
   _weapon: {fileID: -187163571796443866}
   _healthbar: {fileID: 508160093412112954}
   _shieldbar: {fileID: 4673852616754381821}
-  _energySystem: {fileID: 7461456157858375419}
-  _energyBar: {fileID: 3451981288234977910}
 --- !u!114 &9011296098682904991
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -317,7 +316,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _maxEnergy: 100
   _energyReplenishDelay: 0
-  _energyReplenishSpeed: 40
+  _energyReplenishSpeed: 25
   <_energy>k__BackingField: 0
 --- !u!1 &462263736857771813
 GameObject:
@@ -1076,17 +1075,6 @@ RectTransform:
   m_CorrespondingSourceObject: {fileID: 6082937098884805140, guid: b8bc32639428bc8d38123d87692db773, type: 3}
   m_PrefabInstance: {fileID: 9128419209209572224}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &3451981288234977910 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 5857298935558922742, guid: b8bc32639428bc8d38123d87692db773, type: 3}
-  m_PrefabInstance: {fileID: 9128419209209572224}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 67db9e8f0e2ae9c40bc1e2b64352a6b4, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!114 &4673852616754381821 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 4499787453588383869, guid: b8bc32639428bc8d38123d87692db773, type: 3}

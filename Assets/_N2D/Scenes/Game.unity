@@ -639,6 +639,14 @@ PrefabInstance:
       propertyPath: m_Name
       value: GUIGameplay
       objectReference: {fileID: 0}
+    - target: {fileID: 8716274599826471873, guid: ba8d5785e665ea74db17884b3d21f24f, type: 3}
+      propertyPath: m_AnchorMax.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8716274599826471873, guid: ba8d5785e665ea74db17884b3d21f24f, type: 3}
+      propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []

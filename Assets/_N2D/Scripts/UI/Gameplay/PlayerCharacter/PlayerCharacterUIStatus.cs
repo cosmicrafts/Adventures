@@ -2,7 +2,6 @@ using Netick;
 using Netick.Unity;
 using StinkySteak.N2D.Gameplay.Player.Character.Health;
 using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
-using StinkySteak.N2D.Gameplay.Player.Character.Energy;
 using StinkySteak.N2D.Gameplay.Player.Session;
 using StinkySteak.N2D.Gameplay.PlayerManager.Global;
 using TMPro;
@@ -19,15 +18,14 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
         [SerializeField] private PlayerCharacterWeapon _weapon;
         [SerializeField] private Slider _healthbar;
         [SerializeField] private Slider _shieldbar;
-        [SerializeField] private PlayerEnergySystem _energySystem;
-        [SerializeField] private Slider _energyBar;
+        
+        
         private PlayerSession _session;
 
         public override void NetworkStart()
         {
             _health.OnHealthChanged += OnHealthChanged;
             _health.OnShieldChanged += OnShieldChanged;
-            _energySystem.OnEnergyChanged += OnEnergyChanged;
 
             GlobalPlayerManager globalPlayerManager = Sandbox.GetComponent<GlobalPlayerManager>();
 
@@ -45,12 +43,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
         private void OnNicknameChanged()
         {
             _textNametag.SetText(_session.Nickname);
-        }
-
-        private void OnEnergyChanged()
-        {
-            _energyBar.maxValue = _energySystem.MaxEnergy;
-            _energyBar.value = _energySystem.Energy;
         }
 
         private void OnHealthChanged()
