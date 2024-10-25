@@ -101,6 +101,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _distanceToDestroy: 0.5
-  _bulletSpeed: 24
+  _bulletSpeed: 36
   _lifetime: 2
   _bulletImpactVFX: {fileID: 2384462365135021489, guid: 48b21d72da0ebae4088ae92940ae0d6b, type: 3}

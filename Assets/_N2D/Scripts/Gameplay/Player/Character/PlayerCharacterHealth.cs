@@ -11,8 +11,8 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
         [Networked] private int _health { get; set; }
         [Networked] private int _shield { get; set; }
 
-        public const int MAX_HEALTH = 100;
-        public const int MAX_SHIELD = 50;
+        public int MAX_HEALTH = 100;
+        public int MAX_SHIELD = 50;
 
         public event Action OnHealthChanged;
         public event Action OnShieldChanged;

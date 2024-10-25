@@ -57,8 +57,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         // Smoothly rotate weapon visual towards the target rotation
         _weaponVisual.rotation = Quaternion.Lerp(_weaponVisual.rotation, targetRotation, Time.deltaTime * rotationSmoothingSpeed);
     }
-
-
+    
         private const float INTERPOLATION_TOLERANCE = 100f;
 
         private float LerpDegree(float from, float to, float alpha)

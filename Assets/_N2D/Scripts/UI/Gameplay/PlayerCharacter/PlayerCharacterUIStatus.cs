@@ -1,7 +1,7 @@
 using Netick;
 using Netick.Unity;
 using StinkySteak.N2D.Gameplay.Player.Character.Health;
-using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
+using StinkySteak.N2D.Gameplay.Player.Character.Energy; // Import the energy system
 using StinkySteak.N2D.Gameplay.Player.Session;
 using StinkySteak.N2D.Gameplay.PlayerManager.Global;
 using TMPro;
@@ -15,7 +15,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
         [SerializeField] private TMP_Text _textNametag;
 
         [SerializeField] private PlayerCharacterHealth _health;
-        [SerializeField] private PlayerCharacterWeapon _weapon;
+        [SerializeField] private PlayerEnergySystem _energySystem; // Use PlayerEnergySystem instead of PlayerCharacterWeapon
         [SerializeField] private Slider _healthbar;
         [SerializeField] private Slider _shieldbar; // New shield slider
         [SerializeField] private Slider _energyBar; // Renamed from _ammobar to _energyBar
@@ -25,7 +25,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
         {
             _health.OnHealthChanged += OnHealthChanged;
             _health.OnShieldChanged += OnShieldChanged; // Subscribe to shield changes
-            _weapon.OnEnergyChanged += OnEnergyChanged; // Renamed OnAmmoChanged to OnEnergyChanged
+            _energySystem.OnEnergyChanged += OnEnergyChanged; // Listen to energy changes
 
             GlobalPlayerManager globalPlayerManager = Sandbox.GetComponent<GlobalPlayerManager>();
 
@@ -47,19 +47,19 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
 
         private void OnEnergyChanged() // Renamed to reflect the energy system
         {
-            _energyBar.maxValue = _weapon.MaxEnergy; // Renamed MaxAmmo to MaxEnergy
-            _energyBar.value = _weapon.Energy; // Renamed Ammo to Energy
+            _energyBar.maxValue = _energySystem.MaxEnergy; // Use energy system's MaxEnergy
+            _energyBar.value = _energySystem.Energy; // Use energy system's Energy
         }
 
         private void OnHealthChanged()
         {
-            _healthbar.maxValue = PlayerCharacterHealth.MAX_HEALTH;
+            _healthbar.maxValue = _health.MAX_HEALTH;
             _healthbar.value = _health.Health;
         }
 
         private void OnShieldChanged() // New method to update shield bar
         {
-            _shieldbar.maxValue = PlayerCharacterHealth.MAX_SHIELD; // Set max shield value
+            _shieldbar.maxValue = _health.MAX_SHIELD; // Set max shield value
             _shieldbar.value = _health.Shield; // Update shield value
         }
     }

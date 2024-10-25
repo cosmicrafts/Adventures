@@ -2,6 +2,7 @@ using Netick.Unity;
 using Netick;
 using StinkySteak.N2D.Gameplay.PlayerInput;
 using StinkySteak.N2D.Gameplay.Player.Character.Weapon;  // To access weapon's rotation
+using StinkySteak.N2D.Gameplay.Player.Character.Energy;  // Import the energy system
 using UnityEngine;
 
 namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
@@ -19,9 +20,19 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
         [Networked] private Vector2 _dashDirection { get; set; } // Direction of the current dash
         [SerializeField] public PlayerCharacterWeapon _weapon;  // Reference to the weapon to get aiming direction
 
-        private PlayerCharacterWeapon _playerWeapon;
+        private PlayerEnergySystem _energySystem; // Reference to the energy system
 
         public bool IsWalking => _rigidbody2D.linearVelocity.magnitude > 0.1f;
+
+        public override void NetworkStart()
+        {
+            // Get the PlayerEnergySystem component on the same GameObject
+            _energySystem = GetComponent<PlayerEnergySystem>();
+            if (_energySystem == null)
+            {
+                Sandbox.LogError("PlayerEnergySystem is missing on the player. Please add it.");
+            }
+        }
 
         public override void NetworkFixedUpdate()
         {
@@ -39,7 +50,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
                     _rigidbody2D.linearVelocity = inputDirection.magnitude > 0.1f ? _moveSpeed * inputDirection : Vector2.zero;
 
                     // Handle dash initiation
-                    if (input.Jump && _canDash && _weapon.Energy >= _energyCostPerDash) // Check energy before dashing
+                    if (input.Jump && _canDash && _energySystem.Energy >= _energyCostPerDash) // Check energy from energy system before dashing
                     {
                         StartDash();
                     }
@@ -56,7 +67,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
             _rigidbody2D.linearVelocity = _dashDirection * _dashForce;
 
             // Deduct energy for dashing
-            _weapon.DeductEnergy(_energyCostPerDash); // Ensure this method is added to handle energy deduction
+            _energySystem.DeductEnergy(_energyCostPerDash); // Deduct energy from the energy system
 
             // Update dash state
             _isDashing = true;

@@ -32,7 +32,7 @@ namespace StinkySteak.N2D.Launcher.Prototype
 
             if (_spawnpoints == null)
             {
-                Debug.LogError("Spawn points not found in the scene.");
+                Sandbox.LogError("Spawn points not found in the scene.");
                 return;
             }
 
