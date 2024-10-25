@@ -27,16 +27,28 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
 
         public event Action OnHealthChanged;
         public event Action OnShieldChanged;
+        public event Action OnHealthReduced;  // New event for health reduction
+        public event Action OnShieldReduced;  // New event for shield reduction
 
         [OnChanged(nameof(_health))]
         private void OnChangedHealth(OnChangedData onChangedData)
         {
+            float previousHealth = onChangedData.GetPreviousValue<float>();
+            if (_health < previousHealth)  // Trigger OnHealthReduced if health decreases
+            {
+                OnHealthReduced?.Invoke();
+            }
             OnHealthChanged?.Invoke();
         }
 
         [OnChanged(nameof(_shield))]
         private void OnChangedShield(OnChangedData onChangedData)
         {
+            float previousShield = onChangedData.GetPreviousValue<float>();
+            if (_shield < previousShield)  // Trigger OnShieldReduced if shield decreases
+            {
+                OnShieldReduced?.Invoke();
+            }
             OnShieldChanged?.Invoke();
         }
 
@@ -92,6 +104,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
                     _shield = 0;
 
                 OnShieldChanged?.Invoke();
+                OnShieldReduced?.Invoke();
 
                 // If the shield is depleted, apply the remaining damage to health
                 if (remainingDamage > 0)
@@ -125,6 +138,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
             _timerHealthReplenish = TickTimer.CreateFromSeconds(Sandbox, _healthReplenishDelay);
 
             OnHealthChanged?.Invoke();
+            OnHealthReduced?.Invoke();
         }
     }
 }

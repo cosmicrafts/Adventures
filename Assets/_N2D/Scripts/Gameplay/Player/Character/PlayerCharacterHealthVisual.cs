@@ -12,32 +12,43 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health.Visual
         [SerializeField] private SpriteRenderer _renderer;
         [SerializeField] private Material _materialDefault;
         [SerializeField] private Material _materialOnHit;
+        [SerializeField] private Material _materialOnShieldHit;
         [SerializeField] private float _materialOnHitLifetime = 0.2f;
 
         [SerializeField] private GameObject _vfxBloodPrefab;
+        [SerializeField] private GameObject _vfxShieldPrefab;
 
         private AuthTickTimer _timerMaterialOnHitLifetime;
 
-        // public override void NetworkStart()
-        // {
-        //     _health.OnHealthReduced += OnDamaged;
-        // }
+        public override void NetworkStart()
+        {
+            _health.OnHealthReduced += OnDamaged;       // Health damage logic
+            _health.OnShieldReduced += OnShieldDamaged; // Shield damage logic
+        }
 
-        // public override void NetworkRender()
-        // {
-        //     if (_timerMaterialOnHitLifetime.IsExpired(Sandbox))
-        //     {
-        //         _renderer.material = _materialDefault;
-        //         _timerMaterialOnHitLifetime = AuthTickTimer.None;
-        //     }
-        // }
+        public override void NetworkRender()
+        {
+            if (_timerMaterialOnHitLifetime.IsExpired(Sandbox))
+            {
+                _renderer.material = _materialDefault;
+                _timerMaterialOnHitLifetime = AuthTickTimer.None;
+            }
+        }
 
-        // private void OnDamaged()
-        // {
-        //     Sandbox.Instantiate(_vfxBloodPrefab, transform.position, Quaternion.identity);
+        private void OnDamaged()
+        {
+            Sandbox.Instantiate(_vfxBloodPrefab, transform.position, Quaternion.identity);
 
-        //     _renderer.material = _materialOnHit;
-        //     _timerMaterialOnHitLifetime = AuthTickTimer.CreateFromSeconds(Sandbox, _materialOnHitLifetime);
-        // }
+            _renderer.material = _materialOnHit;
+            _timerMaterialOnHitLifetime = AuthTickTimer.CreateFromSeconds(Sandbox, _materialOnHitLifetime);
+        }
+
+        private void OnShieldDamaged()
+        {
+            Sandbox.Instantiate(_vfxShieldPrefab, transform.position, Quaternion.identity);  // Spawn shield hit VFX
+
+            _renderer.material = _materialOnShieldHit;  // Change to shield hit material
+            _timerMaterialOnHitLifetime = AuthTickTimer.CreateFromSeconds(Sandbox, _materialOnHitLifetime);
+        }
     }
 }
