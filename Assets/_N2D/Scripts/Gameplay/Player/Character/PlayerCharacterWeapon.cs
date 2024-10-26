@@ -22,6 +22,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         [SerializeField] private float _weaponOriginPointOffset = 1.5f;
         [SerializeField] private LayerMask _hitableLayer;
         [SerializeField] private float _energyCostPerShot = 10f;
+        [SerializeField] private Hovl_Laser _laserController;
 
         [Networked][Smooth(false)] public float Degree { get; private set; }
         [Networked] private ProjectileHit _lastProjectileHit { get; set; }
@@ -243,50 +244,62 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         private void StartLaser()
         {
             _isLaserActive = true;
-            _laserRenderer.enabled = true; // Activate the visual effect
+            _laserRenderer.enabled = true;
+            if (_laserController != null)
+            {
+                _laserController.ResetLaser(); // Reset laser state before activating
+                _laserController.enabled = true; // Enable the laser controller
+            }
 
             UpdateLaser(); // Immediately update to apply initial damage
         }
 
 private void UpdateLaser()
 {
+    if (_laserController == null) return;
+
     Vector2 direction = DegreesToDirection(Degree);
     Vector2 originPoint = GetWeaponOriginPoint(direction);
 
+    // Set starting position of the laser
+    _laserController.transform.position = originPoint;
+    _laserController.transform.rotation = Quaternion.LookRotation(direction);
+
+    // Check if the laser hits something
     ShootingRaycastResult hitResult = default;
-    bool isHit = false;
+    bool isHit = _raycastType == RaycastType.UnityPhysX
+        ? ShootUnity(originPoint, direction, out hitResult)
+        : ShootLagComp(originPoint, direction, out hitResult);
 
-    if (_raycastType == RaycastType.UnityPhysX)
-    {
-        isHit = ShootUnity(originPoint, direction, out hitResult);
-    }
-    else if (_raycastType == RaycastType.NetickLagComp)
-    {
-        isHit = ShootLagComp(originPoint, direction, out hitResult);
-    }
-
-    _laserRenderer.SetPosition(0, originPoint);
-    _laserRenderer.SetPosition(1, isHit ? hitResult.Point : originPoint + (direction * _distance));
-
+    // Update Hovl_Laser's length based on hit or maximum length
     if (isHit)
     {
+        _laserController.MaxLength = Vector3.Distance(originPoint, hitResult.Point);
         ApplyLaserDamage(hitResult);
         
         // Deduct energy per tick only when damage is applied
         _energySystem.DeductEnergy(_laserEnergyCostPerTick);
     }
-    else if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerTick))
+    else
     {
-        StopLaser(); // Stop if not enough energy to continue
+        _laserController.MaxLength = _distance;
+        if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerTick))
+        {
+            StopLaser(); // Stop if not enough energy to continue
+        }
     }
 }
 
 
         private void StopLaser()
-        {
-            _isLaserActive = false;
-            _laserRenderer.enabled = false; // Deactivate the visual effect
-        }
+{
+    _isLaserActive = false;
+
+    if (_laserController != null)
+    {
+        _laserController.DisablePrepare(); // Deactivate the laser
+    }
+}
 
         private void ApplyLaserDamage(ShootingRaycastResult hitResult)
         {
