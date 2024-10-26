@@ -1616,7 +1616,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &8878735311349041671
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1654,3 +1654,4 @@ MonoBehaviour:
   timerText: {fileID: 5819153979925012273}
   energyCostText: {fileID: 5831148785782506300}
   radialTimer: {fileID: 1527838177462594149}
+  skillIcon: {fileID: 0}

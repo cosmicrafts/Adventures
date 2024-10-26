@@ -2,12 +2,14 @@ using Netick.Unity;
 using StinkySteak.N2D.Gameplay.Player.Character;
 using StinkySteak.N2D.Gameplay.PlayerManager.LocalPlayer;
 using UnityEngine;
+using System.Collections;
 
 namespace StinkySteak.N2D.Gameplay.PlayerInput
 {
     public class LocalInputProvider : NetworkEventsListener
     {
         private PlayerCharacter _localPlayer;
+        public bool activateShieldSkillButton = false; // Persistent flag for button press
 
         public override void OnStartup(NetworkSandbox sandbox)
         {
@@ -26,13 +28,20 @@ namespace StinkySteak.N2D.Gameplay.PlayerInput
         {
             PlayerCharacterInput input = new PlayerCharacterInput();
 
-            // Existing input handling...
             input.HorizontalMove = Input.GetAxis("Horizontal");
             input.VerticalMove = Input.GetAxis("Vertical");
             input.Jump = Input.GetKey(KeyCode.Space);
             input.LookDegree = GetLookDegree();
             input.IsFiring = Input.GetKey(KeyCode.Mouse0);
-            input.ActivateRegenerativeShield = Input.GetKey(KeyCode.Q);
+
+            // Activate shield skill as long as Q or the button is held
+            input.ActivateRegenerativeShield = Input.GetKey(KeyCode.Q) || activateShieldSkillButton;
+
+            // Reset `activateShieldSkillButton` only after input is processed in the network
+            // if (input.ActivateRegenerativeShield)
+            // {
+            //     activateShieldSkillButton = false; // Reset once network syncs the active state
+            // }
 
             // Capture right-click target position for movement
             if (Input.GetKey(KeyCode.Mouse1))
@@ -44,8 +53,25 @@ namespace StinkySteak.N2D.Gameplay.PlayerInput
             sandbox.SetInput(input);
         }
 
+        // Method for button press to activate shield skill continuously
+        public void TriggerShieldSkill()
+        {
+            activateShieldSkillButton = true; // Activates shield skill continuously until reset
+            
+            // Automatically reset flag on pointer up using Coroutine or custom delay if needed
+            StartCoroutine(ResetActivateShieldSkillButton());
+        }
 
-        // Calculate the look direction in degrees based on mouse position
+        // Coroutine to wait for "pointer up" and reset the flag
+        private IEnumerator ResetActivateShieldSkillButton()
+        {
+            // Wait for 0.25 seconds before resetting the flag
+            yield return new WaitForSeconds(0.25f);
+            activateShieldSkillButton = false;
+        }
+
+
+
         private float GetLookDegree()
         {
             Vector2 mouseWorldSpace = Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -55,15 +81,9 @@ namespace StinkySteak.N2D.Gameplay.PlayerInput
             return Mathf.Atan2(lookDirection.y, lookDirection.x) * Mathf.Rad2Deg;
         }
 
-        // Get the player's current position
         private Vector2 GetPlayerPosition()
         {
-            if (_localPlayer == null)
-            {
-                return Vector2.zero;
-            }
-
-            return _localPlayer.transform.position;
+            return _localPlayer != null ? _localPlayer.transform.position : Vector2.zero;
         }
     }
 }

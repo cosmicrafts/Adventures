@@ -16,7 +16,7 @@ public class CooldownUIManager : MonoBehaviour
     {
         cooldownDuration = duration;
         currentCooldown = duration;
-        energyCostText.text = $"Energy Cost: {energyCost}";
+        energyCostText.text = $"{energyCost}";
         isCooldownActive = true;
 
         // Reset radial timer fill

@@ -33,7 +33,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
         public float MaxShield => _maxShield;
         public float Shield => _shield;
         private float _originalMaxShield;
-        public CooldownUIManager cooldownUIManager;
+        private CooldownUIManager cooldownUIManager;
 
         public event Action OnHealthChanged;
         public event Action OnShieldChanged;
@@ -73,6 +73,17 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
             if (_energySystem == null)
             {
                 Sandbox.LogError("PlayerEnergySystem is missing on the player. Please add it.");
+            }
+
+            // Locate CooldownUIManager by "ShieldSkill" tag once at startup
+            GameObject cdManagerObject = GameObject.FindWithTag("ShieldSkill");
+            if (cdManagerObject != null)
+            {
+                cooldownUIManager = cdManagerObject.GetComponent<CooldownUIManager>();
+            }
+            else
+            {
+                Sandbox.LogError("CooldownUIManager with tag 'ShieldSkill' not found in the scene.");
             }
         }
 
