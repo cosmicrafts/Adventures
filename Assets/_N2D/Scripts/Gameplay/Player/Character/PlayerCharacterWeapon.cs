@@ -32,7 +32,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
         [SerializeField] private RaycastType _raycastType;
         private PlayerEnergySystem _energySystem;
-        [SerializeField] private float _laserEnergyCostPerSecond = 5f;
+        [SerializeField] private float _laserEnergyCostPerTick = 1f;
 
         [SerializeField] private LineRenderer _laserRenderer; // LineRenderer for the laser effect
         [SerializeField] private float _laserDamagePerSecond = 15f;
@@ -72,14 +72,14 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
     if (FetchInput(out PlayerCharacterInput input))
     {
         // Start laser if E is held down and energy is available
-        if (input.ActivateLaser && _energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond) && !_isLaserActive)
+        if (input.ActivateLaser && _energySystem.HasEnoughEnergy(_laserEnergyCostPerTick) && !_isLaserActive)
         {
             StartLaser();
         }
         else if (_isLaserActive)
         {
             // Stop laser if input is released or energy is insufficient
-            if (!input.ActivateLaser || !_energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond))
+            if (!input.ActivateLaser || !_energySystem.HasEnoughEnergy(_laserEnergyCostPerTick  ))
             {
                 StopLaser();
             }
@@ -250,8 +250,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
 private void UpdateLaser()
 {
-    _energySystem.DeductEnergy(_laserEnergyCostPerSecond * Sandbox.FixedDeltaTime);
-
     Vector2 direction = DegreesToDirection(Degree);
     Vector2 originPoint = GetWeaponOriginPoint(direction);
 
@@ -272,14 +270,17 @@ private void UpdateLaser()
 
     if (isHit)
     {
-        //Sandbox.Log("Laser hit detected at position: " + hitResult.Point);
         ApplyLaserDamage(hitResult);
+        
+        // Deduct energy per tick only when damage is applied
+        _energySystem.DeductEnergy(_laserEnergyCostPerTick);
     }
-    else
+    else if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerTick))
     {
-       // Sandbox.Log("Laser did not hit any target.");
+        StopLaser(); // Stop if not enough energy to continue
     }
 }
+
 
         private void StopLaser()
         {

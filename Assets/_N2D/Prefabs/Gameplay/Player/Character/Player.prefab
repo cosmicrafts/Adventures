@@ -190,13 +190,12 @@ MonoBehaviour:
   _hitableLayer:
     serializedVersion: 2
     m_Bits: 192
-  _energyCostPerShot: 10
+  _energyCostPerShot: 4
   <Degree>k__BackingField: 0
   _raycastType: 0
-  _laserEnergyCostPerSecond: 5
-  _laserDuration: 2
+  _laserEnergyCostPerSecond: 40
   _laserRenderer: {fileID: 5599724901615975129}
-  _laserDamagePerSecond: 15
+  _laserDamagePerSecond: 65
 --- !u!114 &8071094478288072566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -316,7 +315,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _maxEnergy: 100
   _energyReplenishDelay: 0
-  _energyReplenishSpeed: 25
+  _energyReplenishSpeed: 15
   <_energy>k__BackingField: 0
 --- !u!1 &462263736857771813
 GameObject:
