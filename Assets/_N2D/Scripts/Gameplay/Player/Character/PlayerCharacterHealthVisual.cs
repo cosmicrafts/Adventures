@@ -63,12 +63,12 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health.Visual
 
         private void UpdateHealthUI()
         {
-            _healthText.text = $"Health: {_health.Health}/{_health.MaxHealth}";
+            _healthText.text = $"{_health.Health}/{_health.MaxHealth}";
         }
 
         private void UpdateShieldUI()
         {
-            _shieldText.text = $"Shield: {_health.Shield}/{_health.MaxShield}";
+            _shieldText.text = $"{_health.Shield}/{_health.MaxShield}";
         }
     }
 }
