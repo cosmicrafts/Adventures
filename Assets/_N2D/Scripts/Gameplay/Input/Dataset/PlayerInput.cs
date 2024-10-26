@@ -12,5 +12,6 @@ namespace StinkySteak.N2D.Gameplay.PlayerInput
         public float LookDegree;
         public bool ActivateRegenerativeShield;
         public Vector2 TargetPosition;
+        public bool ActivateLaser;
     }
 }

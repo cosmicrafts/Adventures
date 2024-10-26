@@ -31,8 +31,16 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         public event Action OnLastProjectileHitChanged;
 
         [SerializeField] private RaycastType _raycastType;
+        private PlayerEnergySystem _energySystem;
+        [SerializeField] private float _laserEnergyCostPerSecond = 5f;
 
-        private PlayerEnergySystem _energySystem; // Reference to the energy system
+
+        [SerializeField] private float _laserDuration = 2f;
+        [SerializeField] private LineRenderer _laserRenderer; // LineRenderer for the laser effect
+        [SerializeField] private float _laserDamagePerSecond = 15f;
+        private bool _isLaserActive;
+        private TickTimer _laserDurationTimer;
+
 
         private enum RaycastType
         {
@@ -64,8 +72,25 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         public override void NetworkFixedUpdate()
         {
             ProcessAim();
-            ProcessShooting();
+            
+            if (FetchInput(out PlayerCharacterInput input))
+            {
+                // Start laser if firing and energy is available
+                if (input.ActivateLaser && _energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond) && !_isLaserActive)
+                {
+                    StartLaser();
+                }
+                else if (_isLaserActive)
+                {
+                    UpdateLaser();
+                }
+                else
+                {
+                    ProcessShooting();
+                }
+            }
         }
+
 
         private void ProcessAim()
         {
@@ -209,5 +234,67 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
             return new Vector2(x, y);
         }
+
+        private void StartLaser()
+        {
+            _isLaserActive = true;
+            _laserDurationTimer = TickTimer.CreateFromSeconds(Sandbox, _laserDuration);
+            _laserRenderer.enabled = true; // Activate the visual effect
+
+            UpdateLaser(); // Immediately update to apply initial damage
+        }
+
+        private void UpdateLaser()
+        {
+            if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond) || _laserDurationTimer.IsExpired(Sandbox))
+            {
+                StopLaser();
+                return;
+            }
+
+            _energySystem.DeductEnergy(_laserEnergyCostPerSecond * Sandbox.FixedDeltaTime);
+
+            Vector2 direction = DegreesToDirection(Degree);
+            Vector2 originPoint = GetWeaponOriginPoint(direction);
+            
+            if (_raycastType == RaycastType.UnityPhysX)
+            {
+                if (ShootUnity(originPoint, direction, out ShootingRaycastResult hitResult))
+                {
+                    ApplyLaserDamage(hitResult);
+                    _laserRenderer.SetPosition(1, hitResult.Point); // Set laser end position
+                }
+            }
+            else if (_raycastType == RaycastType.NetickLagComp)
+            {
+                if (ShootLagComp(originPoint, direction, out ShootingRaycastResult hitResult))
+                {
+                    ApplyLaserDamage(hitResult);
+                    _laserRenderer.SetPosition(1, hitResult.Point);
+                }
+            }
+            else
+            {
+                _laserRenderer.SetPosition(1, originPoint + (direction * _distance));
+            }
+
+            _laserRenderer.SetPosition(0, originPoint); // Set laser origin position
+        }
+
+        private void StopLaser()
+        {
+            _isLaserActive = false;
+            _laserRenderer.enabled = false; // Deactivate the visual effect
+        }
+
+        private void ApplyLaserDamage(ShootingRaycastResult hitResult)
+        {
+            if (hitResult.HitObject.TryGetComponent<PlayerCharacterHealth>(out var health))
+            {
+                health.DeductShieldAndHealth(_laserDamagePerSecond * Sandbox.FixedDeltaTime, transform);
+            }
+        }
+
+
     }
 }

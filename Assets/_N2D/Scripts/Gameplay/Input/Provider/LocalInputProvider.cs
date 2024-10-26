@@ -33,6 +33,7 @@ namespace StinkySteak.N2D.Gameplay.PlayerInput
             input.Jump = Input.GetKey(KeyCode.Space);
             input.LookDegree = GetLookDegree();
             input.IsFiring = Input.GetKey(KeyCode.Mouse0);
+            input.ActivateLaser = Input.GetKey(KeyCode.E);
 
             // Activate shield skill as long as Q or the button is held
             input.ActivateRegenerativeShield = Input.GetKey(KeyCode.Q) || activateShieldSkillButton;
