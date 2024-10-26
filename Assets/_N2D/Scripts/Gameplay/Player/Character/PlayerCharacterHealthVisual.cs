@@ -1,6 +1,7 @@
 using Netick.Unity;
 using StinkySteak.Netick.Timer;
 using UnityEngine;
+using TMPro;
 
 namespace StinkySteak.N2D.Gameplay.Player.Character.Health.Visual
 {
@@ -9,6 +10,9 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health.Visual
         [SerializeField] private PlayerCharacterHealth _health;
 
         [Space]
+        [SerializeField] private TextMeshProUGUI _healthText;    // TMP for health display
+        [SerializeField] private TextMeshProUGUI _shieldText;    // TMP for shield display
+
         [SerializeField] private SpriteRenderer _renderer;
         [SerializeField] private Material _materialDefault;
         [SerializeField] private Material _materialOnHit;
@@ -22,8 +26,14 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health.Visual
 
         public override void NetworkStart()
         {
-            _health.OnHealthReduced += OnDamaged;       // Health damage logic
-            _health.OnShieldReduced += OnShieldDamaged; // Shield damage logic
+            _health.OnHealthChanged += UpdateHealthUI;       // Health update logic
+            _health.OnShieldChanged += UpdateShieldUI;       // Shield update logic
+            _health.OnHealthReduced += OnDamaged;            // Health damage logic
+            _health.OnShieldReduced += OnShieldDamaged;      // Shield damage logic
+
+            // Initialize values at start
+            UpdateHealthUI();
+            UpdateShieldUI();
         }
 
         public override void NetworkRender()
@@ -45,10 +55,20 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health.Visual
 
         private void OnShieldDamaged()
         {
-            Sandbox.Instantiate(_vfxShieldPrefab, transform.position, Quaternion.identity);  // Spawn shield hit VFX
+            Sandbox.Instantiate(_vfxShieldPrefab, transform.position, Quaternion.identity);
 
-            _renderer.material = _materialOnShieldHit;  // Change to shield hit material
+            _renderer.material = _materialOnShieldHit;
             _timerMaterialOnHitLifetime = AuthTickTimer.CreateFromSeconds(Sandbox, _materialOnHitLifetime);
+        }
+
+        private void UpdateHealthUI()
+        {
+            _healthText.text = $"Health: {_health.Health}/{_health.MaxHealth}";
+        }
+
+        private void UpdateShieldUI()
+        {
+            _shieldText.text = $"Shield: {_health.Shield}/{_health.MaxShield}";
         }
     }
 }

@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b819f5725b33f48bfa112760124d8e10, type: 3}
+  m_Name: Astral Shield
+  m_EditorClassIdentifier: 
+  skillName: Astral Shield
+  cooldownDuration: 4
+  energyCost: 45
+  icon: {fileID: 21300000, guid: 44354a3c07ba0a8249c72efa8437ca92, type: 3}
+  shieldBoost: 0.25
+  instantShieldRegeneration: 0.4
+  shieldDuration: 2
