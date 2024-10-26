@@ -34,13 +34,9 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         private PlayerEnergySystem _energySystem;
         [SerializeField] private float _laserEnergyCostPerSecond = 5f;
 
-
-        [SerializeField] private float _laserDuration = 2f;
         [SerializeField] private LineRenderer _laserRenderer; // LineRenderer for the laser effect
         [SerializeField] private float _laserDamagePerSecond = 15f;
         private bool _isLaserActive;
-        private TickTimer _laserDurationTimer;
-
 
         private enum RaycastType
         {
@@ -70,26 +66,35 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         }
 
         public override void NetworkFixedUpdate()
+{
+    ProcessAim();
+    
+    if (FetchInput(out PlayerCharacterInput input))
+    {
+        // Start laser if E is held down and energy is available
+        if (input.ActivateLaser && _energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond) && !_isLaserActive)
         {
-            ProcessAim();
-            
-            if (FetchInput(out PlayerCharacterInput input))
+            StartLaser();
+        }
+        else if (_isLaserActive)
+        {
+            // Stop laser if input is released or energy is insufficient
+            if (!input.ActivateLaser || !_energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond))
             {
-                // Start laser if firing and energy is available
-                if (input.ActivateLaser && _energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond) && !_isLaserActive)
-                {
-                    StartLaser();
-                }
-                else if (_isLaserActive)
-                {
-                    UpdateLaser();
-                }
-                else
-                {
-                    ProcessShooting();
-                }
+                StopLaser();
+            }
+            else
+            {
+                UpdateLaser();
             }
         }
+        else
+        {
+            ProcessShooting();
+        }
+    }
+}
+
 
 
         private void ProcessAim()
@@ -238,7 +243,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         private void StartLaser()
         {
             _isLaserActive = true;
-            _laserDurationTimer = TickTimer.CreateFromSeconds(Sandbox, _laserDuration);
             _laserRenderer.enabled = true; // Activate the visual effect
 
             UpdateLaser(); // Immediately update to apply initial damage
@@ -246,12 +250,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
 private void UpdateLaser()
 {
-    if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond) || _laserDurationTimer.IsExpired(Sandbox))
-    {
-        StopLaser();
-        return;
-    }
-
     _energySystem.DeductEnergy(_laserEnergyCostPerSecond * Sandbox.FixedDeltaTime);
 
     Vector2 direction = DegreesToDirection(Degree);
@@ -269,19 +267,17 @@ private void UpdateLaser()
         isHit = ShootLagComp(originPoint, direction, out hitResult);
     }
 
-    // Set the laser positions whether hit or not
     _laserRenderer.SetPosition(0, originPoint);
     _laserRenderer.SetPosition(1, isHit ? hitResult.Point : originPoint + (direction * _distance));
 
-    // Log if the laser hit something
     if (isHit)
     {
-        Sandbox.Log("Laser hit detected at position: " + hitResult.Point);
+        //Sandbox.Log("Laser hit detected at position: " + hitResult.Point);
         ApplyLaserDamage(hitResult);
     }
     else
     {
-        Sandbox.Log("Laser did not hit any target.");
+       // Sandbox.Log("Laser did not hit any target.");
     }
 }
 
@@ -299,11 +295,11 @@ private void UpdateLaser()
                 {
                     float damageAmount = _laserDamagePerSecond * Sandbox.FixedDeltaTime;
                     playerCharacterHealth.DeductShieldAndHealth(damageAmount, transform);
-                    Sandbox.Log("Laser applied " + damageAmount + " damage to target at: " + hitResult.Point);
+                   // Sandbox.Log("Laser applied " + damageAmount + " damage to target at: " + hitResult.Point);
                 }
                 else
                 {
-                    Sandbox.Log("Laser hit an object without a health component.");
+                    //Sandbox.Log("Laser hit an object without a health component.");
                 }
             }
         }
