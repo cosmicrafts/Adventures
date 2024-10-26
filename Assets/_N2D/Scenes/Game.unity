@@ -697,6 +697,10 @@ PrefabInstance:
       value: GUIGameplay
       objectReference: {fileID: 0}
     - target: {fileID: 7239347327623455228, guid: ba8d5785e665ea74db17884b3d21f24f, type: 3}
+      propertyPath: m_Enabled
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7239347327623455228, guid: ba8d5785e665ea74db17884b3d21f24f, type: 3}
       propertyPath: m_TargetGraphic
       value: 
       objectReference: {fileID: 1592348469}
