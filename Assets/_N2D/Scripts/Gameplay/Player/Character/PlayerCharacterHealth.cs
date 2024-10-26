@@ -18,10 +18,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
         [SerializeField] private float _healthReplenishDelay = 2f;      // Delay before health replenishment starts
         [SerializeField] private float _healthReplenishSpeed = 1f;      // Speed at which health replenishes
         [SerializeField] private float _reflectPercentage = 0.2f;       // Reflect Damage
-        [SerializeField] private float _regenerativeShieldEnergyCost = 20f;
-        [SerializeField] private float _regenerativeShieldBoost = 0.2f;  // Adds extra capacity
-        [SerializeField] private float _instantShieldRegeneration = 0.3f; // Instantly restores % of max shield
-        [SerializeField] private float _regenerativeShieldDuration = 1f;
         [SerializeField] private RegenerativeShieldSO regenerativeShieldSO;
         [Networked] private float _health { get; set; }
         [Networked] private float _shield { get; set; }
