@@ -13,8 +13,9 @@ MonoBehaviour:
   m_Name: Dash
   m_EditorClassIdentifier: 
   skillName: Dash
-  cooldownDuration: 0.4
+  cooldownDuration: 4
   energyCost: 20
   icon: {fileID: 21300000, guid: 7c776d4886d6d49b2970e919256acca2, type: 3}
-  dashForce: 2
-  dashCooldown: 0
+  dashForce: 20
+  dashDuration: 0.4
+  dashCooldown: 4

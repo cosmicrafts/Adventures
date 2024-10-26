@@ -80,32 +80,39 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
         }
     }
 
-        public void StartDash()
-        {
-            _dashDirection = GetDashDirectionFromWeapon();
-            _rigidbody2D.linearVelocity = _dashDirection * dashSkillSO.dashForce;
-            _energySystem.DeductEnergy(dashSkillSO.energyCost);
-            _isDashing = true;
-            _canDash = false;
+    public void StartDash()
+    {
+        _dashDirection = GetDashDirectionFromWeapon();
+        _rigidbody2D.linearVelocity = _dashDirection * dashSkillSO.dashForce;
+        _energySystem.DeductEnergy(dashSkillSO.energyCost);
+        _isDashing = true;
+        _canDash = false;
 
-            // Call CooldownUIManager with values from DashSkillSO
-            cooldownUIManager?.StartCooldown(dashSkillSO.dashCooldown, dashSkillSO.energyCost);
-            Sandbox.StartCoroutine(DashCooldownCoroutine());
-        }
+        // Start the dash duration timer
+        Sandbox.StartCoroutine(DashDurationCoroutine());
+        // Start the cooldown UI for when the dash can be used again
+        cooldownUIManager?.StartCooldown(dashSkillSO.dashCooldown, dashSkillSO.energyCost);
+    }
+
+    private System.Collections.IEnumerator DashDurationCoroutine()
+    {
+        yield return new WaitForSeconds(dashSkillSO.dashDuration);
+        _isDashing = false; // Ends the dash, allowing movement to resume
+
+        // Start cooldown timer after dash duration ends
+        Sandbox.StartCoroutine(DashCooldownCoroutine());
+    }
+
+    private System.Collections.IEnumerator DashCooldownCoroutine()
+    {
+        yield return new WaitForSeconds(dashSkillSO.dashCooldown);
+        _canDash = true; // Allows dash to be used again after the cooldown period
+    }
+
 
         private void ApplyDash()
         {
             _rigidbody2D.linearVelocity = _dashDirection * dashSkillSO.dashForce;
-        }
-
-
-        private System.Collections.IEnumerator DashCooldownCoroutine()
-        {
-            yield return new WaitForSeconds(dashSkillSO.dashCooldown);
-
-            // End the dash and allow dashing again after the cooldown
-            _isDashing = false;
-            _canDash = true;
         }
 
 

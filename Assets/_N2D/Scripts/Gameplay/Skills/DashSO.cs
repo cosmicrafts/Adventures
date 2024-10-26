@@ -7,6 +7,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Skills
     public class DashSkillSO : SkillSO
     {
         public float dashForce;
+        public float dashDuration;
         public float dashCooldown;
 
         public override void Activate(GameObject user)
