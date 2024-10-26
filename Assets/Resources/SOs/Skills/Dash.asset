@@ -17,5 +17,5 @@ MonoBehaviour:
   energyCost: 20
   icon: {fileID: 21300000, guid: 7c776d4886d6d49b2970e919256acca2, type: 3}
   dashForce: 20
-  dashDuration: 0.4
-  dashCooldown: 4
+  dashDuration: 0.5
+  dashCooldown: 5

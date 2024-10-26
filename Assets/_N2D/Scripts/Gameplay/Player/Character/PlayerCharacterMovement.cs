@@ -90,9 +90,12 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
 
         // Start the dash duration timer
         Sandbox.StartCoroutine(DashDurationCoroutine());
-        // Start the cooldown UI for when the dash can be used again
-        cooldownUIManager?.StartCooldown(dashSkillSO.dashCooldown, dashSkillSO.energyCost);
+
+        // Start the cooldown UI with a small buffer (0.25 seconds)
+        float uiCooldown = dashSkillSO.dashCooldown + 0.65f;
+        cooldownUIManager?.StartCooldown(uiCooldown, dashSkillSO.energyCost);
     }
+
 
     private System.Collections.IEnumerator DashDurationCoroutine()
     {
