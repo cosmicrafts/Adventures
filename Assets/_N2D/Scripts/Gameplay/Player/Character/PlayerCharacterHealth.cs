@@ -5,6 +5,7 @@ using UnityEngine;
 using System;
 using StinkySteak.N2D.Gameplay.PlayerInput;
 using StinkySteak.N2D.Gameplay.Player.Character.Energy;
+using StinkySteak.N2D.Gameplay.Player.Character.Skills;
 
 namespace StinkySteak.N2D.Gameplay.Player.Character.Health
 {
@@ -21,6 +22,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
         [SerializeField] private float _regenerativeShieldBoost = 0.2f;  // Adds extra capacity
         [SerializeField] private float _instantShieldRegeneration = 0.3f; // Instantly restores % of max shield
         [SerializeField] private float _regenerativeShieldDuration = 1f;
+        [SerializeField] private RegenerativeShieldSO regenerativeShieldSO;
         [Networked] private float _health { get; set; }
         [Networked] private float _shield { get; set; }
         [Networked] private TickTimer _timerHealthReplenish { get; set; }
@@ -34,6 +36,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
         public float Health => _health;
         public float MaxShield => _maxShield;
         public float Shield => _shield;
+        private float _originalMaxShield;
         public CooldownUIManager cooldownUIManager;
 
         public event Action OnHealthChanged;
@@ -67,6 +70,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
         {
             _health = _maxHealth;
             _shield = _maxShield;
+            _originalMaxShield = _maxShield;
 
             // Initialize energy system reference
             _energySystem = GetComponent<PlayerEnergySystem>();
@@ -83,15 +87,30 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
             {
                 DeactivateRegenerativeShield();
             }
+
             // Only activate if the cooldown is inactive and Q is pressed
             if (FetchInput(out PlayerCharacterInput input) && input.ActivateRegenerativeShield)
             {
-                ActivateRegenerativeShield();
+                if (regenerativeShieldSO != null)
+                {
+                    // Use SO values to activate shield
+                    ActivateRegenerativeShield(
+                        regenerativeShieldSO.energyCost,
+                        regenerativeShieldSO.shieldBoost,
+                        regenerativeShieldSO.instantShieldRegeneration,
+                        regenerativeShieldSO.shieldDuration
+                    );
+                }
+                else
+                {
+                    Sandbox.LogError("RegenerativeShieldSO is not assigned.");
+                }
             }
 
             ProcessHealthReplenish();
             ProcessShieldReplenish();
         }
+
 
         private void ProcessHealthReplenish()
         {
@@ -187,35 +206,36 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health
             OnHealthReduced?.Invoke();
         }
 
-        public void ActivateRegenerativeShield()
+        public void ActivateRegenerativeShield(float energyCost, float shieldBoost, float instantRegen, float duration)
         {
-            Sandbox.Log($"Attempting to activate regenerative shield. Active: {_isRegenerativeShieldActive}, Energy Available: {_energySystem?.HasEnoughEnergy(_regenerativeShieldEnergyCost)}");
-            if (_isRegenerativeShieldActive || _energySystem == null || !_energySystem.HasEnoughEnergy(_regenerativeShieldEnergyCost)) return;
+            if (_isRegenerativeShieldActive || _energySystem == null || !_energySystem.HasEnoughEnergy(energyCost)) return;
 
-            _energySystem.DeductEnergy(_regenerativeShieldEnergyCost);
+            _energySystem.DeductEnergy(energyCost);
 
-            _maxShield += _maxShield * _regenerativeShieldBoost;
-            _shield += _maxShield * _instantShieldRegeneration;
+            // Apply custom boost and instant regeneration values
+            _maxShield += _maxShield * shieldBoost;
+            _shield += _maxShield * instantRegen;
             if (_shield > _maxShield) _shield = _maxShield;
 
             _isRegenerativeShieldActive = true;
+            _regenerativeShieldTimer = TickTimer.CreateFromSeconds(Sandbox, duration);
 
-            // Start the deactivation timer with the correct duration
-            _regenerativeShieldTimer = TickTimer.CreateFromSeconds(Sandbox, _regenerativeShieldDuration);
-            cooldownUIManager.StartCooldown(_regenerativeShieldDuration, _regenerativeShieldEnergyCost);
+            cooldownUIManager.StartCooldown(duration, energyCost);
 
-            Sandbox.Log("Regenerative Shield Activated: Shield capacity boosted and partially regenerated.");
+            Sandbox.Log("Regenerative Shield Activated: Custom values applied.");
         }
+
 
         private void DeactivateRegenerativeShield()
         {
             if (!_isRegenerativeShieldActive) return;
 
-            _maxShield /= (1 + _regenerativeShieldBoost);
+            _maxShield = _originalMaxShield; // Reset to original value
             if (_shield > _maxShield) _shield = _maxShield;
 
             _isRegenerativeShieldActive = false;
             Sandbox.Log("Regenerative Shield Deactivated: Shield capacity reset to normal.");
         }
+
     }
 }
