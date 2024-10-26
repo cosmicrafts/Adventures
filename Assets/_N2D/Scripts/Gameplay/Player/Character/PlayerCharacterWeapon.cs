@@ -244,42 +244,46 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             UpdateLaser(); // Immediately update to apply initial damage
         }
 
-        private void UpdateLaser()
-        {
-            if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond) || _laserDurationTimer.IsExpired(Sandbox))
-            {
-                StopLaser();
-                return;
-            }
+private void UpdateLaser()
+{
+    if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerSecond) || _laserDurationTimer.IsExpired(Sandbox))
+    {
+        StopLaser();
+        return;
+    }
 
-            _energySystem.DeductEnergy(_laserEnergyCostPerSecond * Sandbox.FixedDeltaTime);
+    _energySystem.DeductEnergy(_laserEnergyCostPerSecond * Sandbox.FixedDeltaTime);
 
-            Vector2 direction = DegreesToDirection(Degree);
-            Vector2 originPoint = GetWeaponOriginPoint(direction);
-            
-            if (_raycastType == RaycastType.UnityPhysX)
-            {
-                if (ShootUnity(originPoint, direction, out ShootingRaycastResult hitResult))
-                {
-                    ApplyLaserDamage(hitResult);
-                    _laserRenderer.SetPosition(1, hitResult.Point); // Set laser end position
-                }
-            }
-            else if (_raycastType == RaycastType.NetickLagComp)
-            {
-                if (ShootLagComp(originPoint, direction, out ShootingRaycastResult hitResult))
-                {
-                    ApplyLaserDamage(hitResult);
-                    _laserRenderer.SetPosition(1, hitResult.Point);
-                }
-            }
-            else
-            {
-                _laserRenderer.SetPosition(1, originPoint + (direction * _distance));
-            }
+    Vector2 direction = DegreesToDirection(Degree);
+    Vector2 originPoint = GetWeaponOriginPoint(direction);
 
-            _laserRenderer.SetPosition(0, originPoint); // Set laser origin position
-        }
+    ShootingRaycastResult hitResult = default;
+    bool isHit = false;
+
+    if (_raycastType == RaycastType.UnityPhysX)
+    {
+        isHit = ShootUnity(originPoint, direction, out hitResult);
+    }
+    else if (_raycastType == RaycastType.NetickLagComp)
+    {
+        isHit = ShootLagComp(originPoint, direction, out hitResult);
+    }
+
+    // Set the laser positions whether hit or not
+    _laserRenderer.SetPosition(0, originPoint);
+    _laserRenderer.SetPosition(1, isHit ? hitResult.Point : originPoint + (direction * _distance));
+
+    // Log if the laser hit something
+    if (isHit)
+    {
+        Sandbox.Log("Laser hit detected at position: " + hitResult.Point);
+        ApplyLaserDamage(hitResult);
+    }
+    else
+    {
+        Sandbox.Log("Laser did not hit any target.");
+    }
+}
 
         private void StopLaser()
         {
@@ -289,11 +293,21 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
         private void ApplyLaserDamage(ShootingRaycastResult hitResult)
         {
-            if (hitResult.HitObject.TryGetComponent<PlayerCharacterHealth>(out var health))
+            if (hitResult.HitObject != null)
             {
-                health.DeductShieldAndHealth(_laserDamagePerSecond * Sandbox.FixedDeltaTime, transform);
+                if (TryGetComponentOrInParent(hitResult.HitObject, out PlayerCharacterHealth playerCharacterHealth))
+                {
+                    float damageAmount = _laserDamagePerSecond * Sandbox.FixedDeltaTime;
+                    playerCharacterHealth.DeductShieldAndHealth(damageAmount, transform);
+                    Sandbox.Log("Laser applied " + damageAmount + " damage to target at: " + hitResult.Point);
+                }
+                else
+                {
+                    Sandbox.Log("Laser hit an object without a health component.");
+                }
             }
         }
+
 
 
     }
