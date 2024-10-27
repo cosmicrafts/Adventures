@@ -46,7 +46,7 @@ namespace StinkySteak.N2D.Launcher.Prototype
 
             if (obj.TryGetComponent(out PlayerSession session))
             {
-                session.SetNickname($"Player_{Random.Range(1000, 9999)}");
+                session.SetNickname($"Bot{Random.Range(100, 999)}");
             }
         }
 

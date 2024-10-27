@@ -1,10 +1,9 @@
 using Netick;
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.Player.Character.Health;
 using StinkySteak.N2D.Gameplay.Player.Character.Energy;
-using System;
-using UnityEngine;
+using StinkySteak.N2D.Gameplay.Player.Character.Health;
 using StinkySteak.N2D.Gameplay.PlayerInput;
+using UnityEngine;
 
 namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 {
@@ -15,19 +14,33 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         [SerializeField] private float _distance = 10f;
         [SerializeField] private LayerMask _hitableLayer;
         [SerializeField] private LineRenderer _laserRenderer;
+
         private PlayerEnergySystem _energySystem;
         private bool _isLaserActive;
-        private PlayerCharacterWeapon _weapon;
+
         public Transform _weaponTransform;
+        private Vector2 _originPoint;
+        private Vector2 _direction;
+
+        // Network properties for start and end points
+        [Networked] private Vector2 _laserStartPoint { get; set; }
+        [Networked] private Vector2 _laserEndPoint { get; set; }
+
+        public void Initialize(NetworkSandbox networkSandbox, Vector2 originPoint, Vector2 direction)
+        {
+            networkSandbox.AttachBehaviour(this);
+            _originPoint = originPoint;
+            _direction = direction;
+
+            // Set initial line renderer state
+            _laserRenderer.enabled = true;
+            _laserStartPoint = _originPoint;
+            _laserEndPoint = _originPoint + (_direction.normalized * _distance);
+        }
 
         public override void NetworkStart()
         {
             _energySystem = GetComponent<PlayerEnergySystem>();
-            if (_energySystem == null)
-            {
-                Sandbox.LogError("PlayerEnergySystem is missing on the player. Please add it.");
-            }
-            _weapon = GetComponent<PlayerCharacterWeapon>();
         }
 
         public override void NetworkFixedUpdate()
@@ -52,63 +65,82 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             }
         }
 
-        private void StartLaser()
-        {
-            _isLaserActive = true;
-            _laserRenderer.enabled = true;
-            UpdateLaser(); // Initial update
-        }
-
-private void UpdateLaser()
+private void StartLaser()
 {
-    if (_weapon == null || _weaponTransform == null) return;
-
-    Vector2 direction = _weapon.DegreesToDirection(_weapon.Degree); 
-    Vector2 originPoint = _weaponTransform.position;
-
-    ShootingRaycastResult hitResult = default;
-    bool isHit = PerformRaycast(originPoint, direction, out hitResult);
-
-    _laserRenderer.SetPosition(0, originPoint);
-    _laserRenderer.SetPosition(1, isHit ? hitResult.Point : originPoint + (direction * _distance));
-
-    if (isHit)
-    {
-        ApplyLaserDamage(hitResult);
-        _energySystem.DeductEnergy(_laserEnergyCostPerTick);
-    }
-    else if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerTick))
-    {
-        StopLaser();
-    }
+    _isLaserActive = true;
+    _laserRenderer.enabled = true;
+    UpdateLaser();
+    RpcStartLaser(_laserStartPoint, _laserEndPoint); // Sync laser start across clients
 }
 
-        private void StopLaser()
-        {
-            _isLaserActive = false;
-            _laserRenderer.enabled = false;
-        }
+private void StopLaser()
+{
+    _isLaserActive = false;
+    _laserRenderer.enabled = false;
+    RpcStopLaser(); // Sync laser stop across clients
+}
 
-        private bool PerformRaycast(Vector3 originPoint, Vector3 direction, out ShootingRaycastResult result)
+
+        private void UpdateLaser()
         {
+            if (_weaponTransform == null) return;
+
+            // Calculate direction and set start and end points
+            Vector2 direction = (_direction != Vector2.zero) ? _direction : (Vector2)_weaponTransform.right;
+            Vector2 originPoint = _weaponTransform.position;
             RaycastHit2D hit = Physics2D.Raycast(originPoint, direction, _distance, _hitableLayer);
-            result = new ShootingRaycastResult { Point = hit.point, HitObject = hit.collider?.transform };
-            return hit.collider != null;
-        }
+            Vector2 endPoint = hit.collider ? hit.point : originPoint + (direction * _distance);
 
-        private void ApplyLaserDamage(ShootingRaycastResult hitResult)
-        {
-            if (hitResult.HitObject != null && _weapon.TryGetComponentOrInParent(hitResult.HitObject, out PlayerCharacterHealth playerCharacterHealth))
+            // Update networked properties to sync across clients
+            _laserStartPoint = originPoint;
+            _laserEndPoint = endPoint;
+
+            if (hit.collider)
             {
-                float damageAmount = _laserDamagePerSecond * Sandbox.FixedDeltaTime;
-                playerCharacterHealth.DeductShieldAndHealth(damageAmount, transform);
+                ApplyLaserDamage(hit);
+                _energySystem.DeductEnergy(_laserEnergyCostPerTick);
             }
         }
 
-        public struct ShootingRaycastResult
+
+        private void ApplyLaserDamage(RaycastHit2D hit)
         {
-            public Transform HitObject;
-            public Vector3 Point;
+            var health = hit.collider.GetComponentInParent<PlayerCharacterHealth>();
+            if (health)
+            {
+                float damageAmount = _laserDamagePerSecond * Sandbox.FixedDeltaTime;
+                health.DeductShieldAndHealth(damageAmount, transform);
+            }
         }
+
+        [Rpc(source: RpcPeers.Everyone, target: RpcPeers.Proxies, isReliable: true)]
+private void RpcStartLaser(Vector2 startPoint, Vector2 endPoint)
+{
+    _laserRenderer.enabled = true;
+    _laserRenderer.SetPosition(0, startPoint);
+    _laserRenderer.SetPosition(1, endPoint);
+}
+
+[Rpc(source: RpcPeers.Everyone, target: RpcPeers.Proxies, isReliable: true)]
+private void RpcStopLaser()
+{
+    _laserRenderer.enabled = false;
+}
+
+
+// OnChanged callback for start point
+[OnChanged(nameof(_laserStartPoint))]
+private void OnLaserStartPointChanged(OnChangedData data)
+{
+    _laserRenderer.SetPosition(0, _laserStartPoint);
+}
+
+// OnChanged callback for end point
+[OnChanged(nameof(_laserEndPoint))]
+private void OnLaserEndPointChanged(OnChangedData data)
+{
+    _laserRenderer.SetPosition(1, _laserEndPoint);
+}
+
     }
 }
