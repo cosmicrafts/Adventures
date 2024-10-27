@@ -15,7 +15,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
         [SerializeField] private TMP_Text _textNametag;
 
         [SerializeField] private PlayerCharacterHealth _health;
-        [SerializeField] private PlayerCharacterWeapon _weapon;
         [SerializeField] private Slider _healthbar;
         [SerializeField] private Slider _shieldbar;
         
@@ -37,7 +36,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.UI
                 return;
             }
 
-            Debug.LogError($"[{nameof(PlayerCharacterUIStatus)}]: No Player Session found for this player! inputSourceId: {Entity.InputSourcePlayerId}", this);
+            //Debug.LogError($"[{nameof(PlayerCharacterUIStatus)}]: No Player Session found for this player! inputSourceId: {Entity.InputSourcePlayerId}", this);
         }
 
         private void OnNicknameChanged()

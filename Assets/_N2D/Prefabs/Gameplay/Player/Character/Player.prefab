@@ -240,7 +240,7 @@ MonoBehaviour:
   _shieldReplenishSpeed: 4
   _healthReplenishDelay: 1
   _healthReplenishSpeed: 4
-  _reflectPercentage: 0.9
+  _reflectPercentage: 0
   regenerativeShieldSO: {fileID: 11400000, guid: 10d2af1c9d1b773efa64e9b629359e05, type: 2}
   <_health>k__BackingField: 0
   <_shield>k__BackingField: 0

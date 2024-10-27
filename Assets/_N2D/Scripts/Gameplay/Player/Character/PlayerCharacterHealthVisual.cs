@@ -7,7 +7,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Health.Visual
 {
     public class PlayerCharacterHealthVisual : NetickBehaviour
     {
-        [SerializeField] private PlayerCharacterHealth _health;
+        public PlayerCharacterHealth _health;
 
         [Space]
         [SerializeField] private TextMeshProUGUI _healthText;    // TMP for health display

@@ -17,6 +17,7 @@ public class EnemyAI : NetworkBehaviour
     public float attackCooldown = 1f; // Cooldown between attacks
     public float shootingRange = 10f; // Range at which the enemy starts shooting
     private float nextAttackTime = 0f;
+    public Transform spriteTransform;
 
     private Transform player;
     private Rigidbody2D rb;
@@ -27,18 +28,7 @@ public class EnemyAI : NetworkBehaviour
         // Assuming player is the camera's transform for this example
         player = Camera.main.transform;
         rb = GetComponent<Rigidbody2D>();
-
-        // Assign health component
         healthComponent = GetComponent<PlayerCharacterHealth>();
-        if (healthComponent == null)
-        {
-            Sandbox.LogError("PlayerCharacterHealth component is missing on this enemy.");
-        }
-        else
-        {
-            // Set up initial health and shield values
-            healthComponent.NetworkStart(); // Initialize the health component networked values
-        }
     }
 
     private void FixedUpdate()
@@ -66,9 +56,12 @@ public class EnemyAI : NetworkBehaviour
 
     private void RotateTowardsPlayer(Vector2 direction)
     {
-        float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f;
-        float smoothedAngle = Mathf.LerpAngle(rb.rotation, targetAngle, rotationSpeed * Time.fixedDeltaTime);
-        rb.MoveRotation(smoothedAngle);
+        if (spriteTransform != null)
+        {
+            float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 0;
+            float smoothedAngle = Mathf.LerpAngle(spriteTransform.eulerAngles.z, targetAngle, rotationSpeed * Time.fixedDeltaTime);
+            spriteTransform.rotation = Quaternion.Euler(0, 0, smoothedAngle);
+        }
     }
 
     private void MoveTowardsPlayer(Vector2 direction)
