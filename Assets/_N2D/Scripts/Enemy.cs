@@ -1,33 +1,50 @@
+using Netick;
+using Netick.Unity;
+using StinkySteak.Netick.Timer;
 using UnityEngine;
+using System;
+using StinkySteak.N2D.Gameplay.PlayerInput;
+using StinkySteak.N2D.Gameplay.Player.Character.Health;
+using StinkySteak.N2D.Gameplay.Player.Character.Skills;
 
-public class EnemyAI : MonoBehaviour
+public class EnemyAI : NetworkBehaviour
 {
+    [Header("Movement Settings")]
     public float speed = 2f;
     public float rotationSpeed = 360f; // Speed at which the enemy rotates toward the player
-    public int maxHealth = 10; // Enemy health
+
+    [Header("Combat Settings")]
     public float attackCooldown = 1f; // Cooldown between attacks
-    public GameObject bulletPrefab; // Bullet prefab for shooting
-    public Transform shootPoint; // Where the bullets are shot from
-    public float bulletSpeed = 10f; // Speed of the bullet
     public float shootingRange = 10f; // Range at which the enemy starts shooting
+    private float nextAttackTime = 0f;
 
     private Transform player;
     private Rigidbody2D rb;
-    private float nextAttackTime = 0f;
-    private int currentHealth;
+    private PlayerCharacterHealth healthComponent;
 
-    private void Start()
+    public override void NetworkStart()
     {
-        player = Camera.main.transform; // Assume player is the camera target
+        // Assuming player is the camera's transform for this example
+        player = Camera.main.transform;
         rb = GetComponent<Rigidbody2D>();
-        currentHealth = maxHealth;
+
+        // Assign health component
+        healthComponent = GetComponent<PlayerCharacterHealth>();
+        if (healthComponent == null)
+        {
+            Sandbox.LogError("PlayerCharacterHealth component is missing on this enemy.");
+        }
+        else
+        {
+            // Set up initial health and shield values
+            healthComponent.NetworkStart(); // Initialize the health component networked values
+        }
     }
 
     private void FixedUpdate()
     {
         if (player != null)
         {
-            // Get direction to the player
             Vector2 direction = (player.position - transform.position).normalized;
 
             // Rotate smoothly towards the player
@@ -42,12 +59,11 @@ public class EnemyAI : MonoBehaviour
             // Check distance and attack player if close enough
             if (Vector2.Distance(transform.position, player.position) <= shootingRange)
             {
-                TryShoot();
+                TryAttack();
             }
         }
     }
 
-    // Rotate the enemy towards the player
     private void RotateTowardsPlayer(Vector2 direction)
     {
         float targetAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg - 90f;
@@ -55,60 +71,38 @@ public class EnemyAI : MonoBehaviour
         rb.MoveRotation(smoothedAngle);
     }
 
-    // Move the enemy towards the player
     private void MoveTowardsPlayer(Vector2 direction)
     {
         rb.linearVelocity = direction * speed;
     }
 
-    // Shooting mechanism
-    private void TryShoot()
+    private void TryAttack()
     {
         if (Time.time >= nextAttackTime)
         {
-            Shoot();
+            // Placeholder for attack mechanism, could be replaced with shooting or melee attack logic later
             nextAttackTime = Time.time + attackCooldown;
         }
     }
 
-    private void Shoot()
+    public void TakeDamage(float damage)
     {
-      //   // Instantiate the bullet and shoot it
-      //   GameObject bullet = Instantiate(bulletPrefab, shootPoint.position, shootPoint.rotation);
-      //   Rigidbody2D bulletRb = bullet.GetComponent<Rigidbody2D>();
-      //   bulletRb.linearVelocity = shootPoint.up * bulletSpeed;
-
-      //   // Destroy the bullet after a while to prevent memory leaks
-      //   Destroy(bullet, 3f); // Destroy after 3 seconds
-    }
-
-    // Enemy takes damage when hit
-    public void TakeDamage(int damage)
-    {
-        currentHealth -= damage;
-        if (currentHealth <= 0)
+        if (healthComponent != null)
         {
-            Die();
+            healthComponent.DeductShieldAndHealth(damage, player); // Deducts damage using shield and health
         }
-    }
-
-    // Destroy the enemy
-    private void Die()
-    {
-        Destroy(gameObject);
     }
 
     private void OnCollisionEnter2D(Collision2D collision)
     {
-      //   // Check for player bullets
-      //   if (collision.gameObject.CompareTag("Bullet"))
-      //   {
-      //       Bullet bullet = collision.gameObject.GetComponent<Bullet>();
-      //       if (bullet != null)
-      //       {
-      //           TakeDamage(bullet.damage); // Apply damage from bullet
-      //           Destroy(collision.gameObject); // Destroy the bullet on impact
-      //       }
-      //   }
+        // if (collision.gameObject.CompareTag("PlayerBullet"))
+        // {
+        //     // Example: assuming PlayerBullet has a Damage property
+        //     if (collision.gameObject.TryGetComponent(out PlayerBullet bullet))
+        //     {
+        //         TakeDamage(bullet.Damage); // Apply damage from bullet
+        //         Destroy(collision.gameObject); // Destroy bullet on impact
+        //     }
+        // }
     }
 }

@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   enemyPrefab: {fileID: 462263736606742655, guid: 1978a1f8cf362f2959c5cc160823986c, type: 3}
-  tileWorldSize: 4
+  tileWorldSize: 10
   renderDistance: 2
   enemiesPerChunk: 2
   enemySpawnDistance: 4

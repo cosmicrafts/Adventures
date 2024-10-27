@@ -328,7 +328,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _laserEnergyCostPerTick: 1
-  _laserDamagePerSecond: 30
+  _laserDamagePerSecond: 800
   _distance: 40
   _hitableLayer:
     serializedVersion: 2

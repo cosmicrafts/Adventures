@@ -12,6 +12,9 @@ GameObject:
   - component: {fileID: 462263736606742652}
   - component: {fileID: 4467566168798759716}
   - component: {fileID: 462263736606742650}
+  - component: {fileID: 4778477144758412795}
+  - component: {fileID: -679326863607293998}
+  - component: {fileID: 6795820104729926367}
   m_Layer: 0
   m_Name: NPC
   m_TagString: Untagged
@@ -110,6 +113,60 @@ Rigidbody2D:
   m_SleepingMode: 1
   m_CollisionDetection: 0
   m_Constraints: 4
+--- !u!114 &4778477144758412795
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 462263736606742655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 01461b1ed7dcda2388ff9c52cac08c63, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speed: 0.5
+  rotationSpeed: 360
+  attackCooldown: 1
+  shootingRange: 10
+--- !u!114 &-679326863607293998
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 462263736606742655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cd0a28ce96a7c6a43ac1d33070dc6dbe, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _maxHealth: 100
+  _maxShield: 50
+  _shieldReplenishDelay: 2
+  _shieldReplenishSpeed: 1
+  _healthReplenishDelay: 2
+  _healthReplenishSpeed: 1
+  _reflectPercentage: 0
+  regenerativeShieldSO: {fileID: 11400000, guid: 10d2af1c9d1b773efa64e9b629359e05, type: 2}
+  <_health>k__BackingField: 0
+  <_shield>k__BackingField: 0
+--- !u!114 &6795820104729926367
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 462263736606742655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b052d790ba05d2ffeb617a978b09f9ef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _maxEnergy: 100
+  _energyReplenishDelay: 2
+  _energyReplenishSpeed: 1
+  <_energy>k__BackingField: 0
 --- !u!1 &462263736857771813
 GameObject:
   m_ObjectHideFlags: 0
