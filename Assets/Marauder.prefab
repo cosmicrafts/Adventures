@@ -94,7 +94,7 @@ MonoBehaviour:
   AddToNetworkLoop: 1
   GlobalObjectIdHash: 344204440
   SceneId: -1
-  _PrefabId: 4
+  _PrefabId: 5
   PrefabRoot: {fileID: 0}
   Children: []
   PrefabIndex: -1
@@ -164,12 +164,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _rigidbody2D: {fileID: 462263736606742650}
   _moveSpeed: 5
-  _dashForce: 20
-  _dashCooldown: 0.5
   <_isDashing>k__BackingField: 0
   <_canDash>k__BackingField: 1
   <_dashDirection>k__BackingField: {x: 0, y: 0}
   _weapon: {fileID: -187163571796443866}
+  <_currentTargetPosition>k__BackingField: {x: 0, y: 0}
+  dashSkillSO: {fileID: 0}
 --- !u!114 &-187163571796443866
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -189,11 +189,8 @@ MonoBehaviour:
   _hitableLayer:
     serializedVersion: 2
     m_Bits: 192
-  _ammoReplenishDelay: 1.5
-  _ammoReplenishSpeed: 15
-  _maxAmmo: 20
+  _energyCostPerShot: 10
   <Degree>k__BackingField: 0
-  <_ammo>k__BackingField: 0
   _raycastType: 0
 --- !u!114 &8071094478288072566
 MonoBehaviour:
@@ -235,7 +232,16 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cd0a28ce96a7c6a43ac1d33070dc6dbe, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _maxHealth: 100
+  _maxShield: 50
+  _shieldReplenishDelay: 2
+  _shieldReplenishSpeed: 1
+  _healthReplenishDelay: 2
+  _healthReplenishSpeed: 1
+  _reflectPercentage: 0.2
+  regenerativeShieldSO: {fileID: 0}
   <_health>k__BackingField: 0
+  <_shield>k__BackingField: 0
 --- !u!114 &6290587020520711107
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -249,11 +255,15 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   _health: {fileID: 3541287404522835111}
+  _healthText: {fileID: 0}
+  _shieldText: {fileID: 0}
   _renderer: {fileID: 462263737325219084}
   _materialDefault: {fileID: 10754, guid: 0000000000000000f000000000000000, type: 0}
   _materialOnHit: {fileID: 2100000, guid: 781b6b37dca04a241a63eca26796b228, type: 2}
+  _materialOnShieldHit: {fileID: 0}
   _materialOnHitLifetime: 0.2
   _vfxBloodPrefab: {fileID: 7311190397742819428, guid: edc41a59079b97d4d9b628cf09749713, type: 3}
+  _vfxShieldPrefab: {fileID: 0}
 --- !u!114 &5794989081546542482
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -270,7 +280,7 @@ MonoBehaviour:
   _health: {fileID: 3541287404522835111}
   _weapon: {fileID: -187163571796443866}
   _healthbar: {fileID: 508160093412112954}
-  _ammobar: {fileID: 3451981288234977910}
+  _shieldbar: {fileID: 0}
 --- !u!114 &9011296098682904991
 MonoBehaviour:
   m_ObjectHideFlags: 0

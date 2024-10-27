@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 8094708547346200017}
   - component: {fileID: -6781965846977073344}
   - component: {fileID: -960902581722611822}
+  - component: {fileID: 7607400178746940182}
   m_Layer: 0
   m_Name: N2DNetworkSandbox
   m_TagString: Untagged
@@ -85,3 +86,20 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _playerSessionPrefab: {fileID: 68535350912409233, guid: 65efd385498aa4347b106615a6c8e875, type: 3}
   _playerCharacterPrefab: {fileID: 462263736606742652, guid: 55f0b1aa9556a4f43b7f88a7451f34cd, type: 3}
+--- !u!114 &7607400178746940182
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8094708547346200016}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 90e4162c8d8ccce448311f61856b314e, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  enemyPrefab: {fileID: 462263736606742655, guid: 1978a1f8cf362f2959c5cc160823986c, type: 3}
+  tileWorldSize: 4
+  renderDistance: 2
+  enemiesPerChunk: 2
+  enemySpawnDistance: 4

@@ -1,30 +1,42 @@
 using System.Collections.Generic;
+using Netick;
+using Netick.Unity;
 using UnityEngine;
 
-public class NPCProceduralGenerator : MonoBehaviour
+public class NPCProceduralGenerator : NetworkBehaviour
 {
     [Header("Enemy Settings")]
-    public GameObject enemyPrefab;        // Prefab for enemies
-    public float tileWorldSize = 16f;     // Size of each chunk tile
-    public int renderDistance = 4;        // Number of chunks to render around the player
-    public int enemiesPerChunk = 2;       // Number of enemies per chunk
-    public float enemySpawnDistance = 10f; // Minimum distance from player to spawn enemies
+    public GameObject enemyPrefab;
+    public float tileWorldSize = 16f;
+    public int renderDistance = 4;
+    public int enemiesPerChunk = 2;
+    public float enemySpawnDistance = 10f;
 
     private Transform player;
     private Vector2 playerPosition;
-    private Dictionary<Vector2, List<GameObject>> enemyChunks = new Dictionary<Vector2, List<GameObject>>();
+    private Dictionary<Vector2, List<NetworkObject>> enemyChunks = new Dictionary<Vector2, List<NetworkObject>>();
     private HashSet<Vector3> occupiedPositions = new HashSet<Vector3>();
 
-    private void Start()
+    public override void NetworkStart()
     {
-        player = Camera.main.transform;
-        GenerateInitialEnemyChunks();
+        if (IsServer)
+        {
+            player = Camera.main.transform;
+
+            // Initialize the pool for enemy prefab
+            Sandbox.InitializePool(enemyPrefab, renderDistance * renderDistance * enemiesPerChunk);
+
+            GenerateInitialEnemyChunks();
+        }
     }
 
-    private void Update()
+    public override void NetworkFixedUpdate()
     {
-        UpdateEnemyChunksAroundPlayer();
-        RemoveDistantChunks();
+        if (IsServer)
+        {
+            UpdateEnemyChunksAroundPlayer();
+            RemoveDistantChunks();
+        }
     }
 
     void GenerateInitialEnemyChunks()
@@ -44,15 +56,18 @@ public class NPCProceduralGenerator : MonoBehaviour
     {
         if (enemyChunks.ContainsKey(chunkCoord)) return;
 
-        List<GameObject> enemiesInChunk = new List<GameObject>();
+        List<NetworkObject> enemiesInChunk = new List<NetworkObject>();
 
         for (int i = 0; i < enemiesPerChunk; i++)
         {
             Vector3 enemyPosition = GetRandomPositionAroundPlayer(chunkCoord);
             if (enemyPosition != Vector3.zero)
             {
-                GameObject enemy = SpawnEnemy(enemyPosition);
-                enemiesInChunk.Add(enemy);
+                NetworkObject enemy = SpawnEnemy(enemyPosition);
+                if (enemy != null)
+                {
+                    enemiesInChunk.Add(enemy);
+                }
             }
         }
 
@@ -76,14 +91,22 @@ public class NPCProceduralGenerator : MonoBehaviour
             return enemyPosition;
         }
 
-        return Vector3.zero; // Return invalid position if too close to player
+        return Vector3.zero;
     }
 
-    GameObject SpawnEnemy(Vector3 position)
+    NetworkObject SpawnEnemy(Vector3 position)
     {
-        GameObject enemy = Instantiate(enemyPrefab, position, Quaternion.identity);
-        Rigidbody2D rb = enemy.GetComponent<Rigidbody2D>();
+        // Use NetworkInstantiate to spawn networked enemies
+        NetworkObject enemy = Sandbox.NetworkInstantiate(enemyPrefab, position, Quaternion.identity)?.GetComponent<NetworkObject>();
 
+        if (enemy == null)
+        {
+            Debug.LogError("Enemy prefab is missing a NetworkObject component.");
+            return null;
+        }
+
+        // Add random movement
+        Rigidbody2D rb = enemy.GetComponent<Rigidbody2D>();
         if (rb != null)
         {
             rb.linearVelocity = new Vector2(Random.Range(-1f, 1f), Random.Range(-1f, 1f));
@@ -131,7 +154,10 @@ public class NPCProceduralGenerator : MonoBehaviour
         {
             foreach (var enemy in enemyChunks[chunkCoord])
             {
-                Destroy(enemy);
+                if (enemy != null)
+                {
+                    Sandbox.Destroy(enemy);
+                }
             }
             enemyChunks.Remove(chunkCoord);
         }
