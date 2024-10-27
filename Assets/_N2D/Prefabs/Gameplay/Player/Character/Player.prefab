@@ -183,6 +183,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ac89be1b258697d4db3305c772b02af1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _laserRenderer: {fileID: 854981307994017807, guid: 0231e187e6b68b0aaaa1fd8e61674eb4, type: 3}
+  _hitEffect: {fileID: 5317215099938762882}
+  _hitOffset: 0
+  _useLaserRotation: 0
+  _mainTextureLength: 1
+  _noiseTextureLength: 1
   _fireRate: 0.1
   _damage: 10
   _distance: 100
@@ -191,12 +197,10 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 192
   _energyCostPerShot: 4
-  _laserController: {fileID: 5212957898638091256}
   <Degree>k__BackingField: 0
   _raycastType: 0
   _laserEnergyCostPerTick: 1
-  _laserRenderer: {fileID: 5216296369701235932}
-  _laserDamagePerSecond: 65
+  _laserDamagePerSecond: 10
 --- !u!114 &8071094478288072566
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -417,6 +421,7 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
+  - {fileID: 5323138071331416304}
   - {fileID: 7993130619245119027}
   - {fileID: 7002669068741815543}
   m_Father: {fileID: 8306287174215952797}
@@ -681,7 +686,6 @@ Transform:
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 1
   m_Children:
-  - {fileID: 5323138071331416304}
   - {fileID: 8376947907524510310}
   - {fileID: 462263737325219087}
   - {fileID: 3081667175771740564}
@@ -1017,7 +1021,7 @@ PrefabInstance:
   serializedVersion: 2
   m_Modification:
     serializedVersion: 3
-    m_TransformParent: {fileID: 8306287174215952797}
+    m_TransformParent: {fileID: 462263737325219087}
     m_Modifications:
     - target: {fileID: 1962479828434100, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
       propertyPath: m_Name
@@ -1041,15 +1045,15 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4814368668172128, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
       propertyPath: m_LocalRotation.x
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4814368668172128, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
       propertyPath: m_LocalRotation.y
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4814368668172128, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
       propertyPath: m_LocalRotation.z
-      value: 0
+      value: -0
       objectReference: {fileID: 0}
     - target: {fileID: 4814368668172128, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
       propertyPath: m_LocalEulerAnglesHint.x
@@ -1063,33 +1067,14 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
-    - target: {fileID: 114466775549768808, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
-      propertyPath: m_Enabled
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 114466775549768808, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
-      propertyPath: useLaserRotation
-      value: 1
-      objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
---- !u!114 &5212957898638091256 stripped
-MonoBehaviour:
-  m_CorrespondingSourceObject: {fileID: 114466775549768808, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
-  m_PrefabInstance: {fileID: 5318345972279515024}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 0}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 7ea4308861e24ac4caa06d26e151d595, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
---- !u!120 &5216296369701235932 stripped
-LineRenderer:
-  m_CorrespondingSourceObject: {fileID: 120065101442726732, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
+--- !u!1 &5317215099938762882 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 1132006484797202, guid: b478a3c4c8ae3bb42a5785ab95bcf6d3, type: 3}
   m_PrefabInstance: {fileID: 5318345972279515024}
   m_PrefabAsset: {fileID: 0}
 --- !u!4 &5323138071331416304 stripped

@@ -6,6 +6,7 @@ TagManager:
   tags:
   - ShieldSkill
   - MovementSkill
+  - Target
   layers:
   - Default
   - TransparentFX
@@ -28,7 +29,7 @@ TagManager:
   - 
   - 
   - 
-  - 
+  - VFX
   - 
   - Canvas
   - 
