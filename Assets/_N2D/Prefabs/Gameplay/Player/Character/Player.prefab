@@ -96,7 +96,7 @@ MonoBehaviour:
   AddToNetworkLoop: 1
   GlobalObjectIdHash: 344204440
   SceneId: -1
-  _PrefabId: 1
+  _PrefabId: 2
   PrefabRoot: {fileID: 0}
   Children: []
   PrefabIndex: -1
@@ -335,6 +335,8 @@ MonoBehaviour:
     m_Bits: 192
   _laserRenderer: {fileID: 5599724901615975129}
   _weaponTransform: {fileID: 7993130619245119027}
+  <_laserStartPoint>k__BackingField: {x: 0, y: 0}
+  <_laserEndPoint>k__BackingField: {x: 0, y: 0}
 --- !u!1 &462263736857771813
 GameObject:
   m_ObjectHideFlags: 0

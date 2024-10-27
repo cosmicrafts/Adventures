@@ -26,18 +26,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         [Networked] private Vector2 _laserStartPoint { get; set; }
         [Networked] private Vector2 _laserEndPoint { get; set; }
 
-        public void Initialize(NetworkSandbox networkSandbox, Vector2 originPoint, Vector2 direction)
-        {
-            networkSandbox.AttachBehaviour(this);
-            _originPoint = originPoint;
-            _direction = direction;
-
-            // Set initial line renderer state
-            _laserRenderer.enabled = true;
-            _laserStartPoint = _originPoint;
-            _laserEndPoint = _originPoint + (_direction.normalized * _distance);
-        }
-
         public override void NetworkStart()
         {
             _energySystem = GetComponent<PlayerEnergySystem>();
@@ -65,21 +53,20 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             }
         }
 
-private void StartLaser()
-{
-    _isLaserActive = true;
-    _laserRenderer.enabled = true;
-    UpdateLaser();
-    RpcStartLaser(_laserStartPoint, _laserEndPoint); // Sync laser start across clients
-}
+        private void StartLaser()
+        {
+            _isLaserActive = true;
+            _laserRenderer.enabled = true;
+            UpdateLaser();
+            RpcStartLaser(_laserStartPoint, _laserEndPoint); // Sync laser start across clients
+        }
 
-private void StopLaser()
-{
-    _isLaserActive = false;
-    _laserRenderer.enabled = false;
-    RpcStopLaser(); // Sync laser stop across clients
-}
-
+        private void StopLaser()
+        {
+            _isLaserActive = false;
+            _laserRenderer.enabled = false;
+            RpcStopLaser(); // Sync laser stop across clients
+        }
 
         private void UpdateLaser()
         {
@@ -102,7 +89,6 @@ private void StopLaser()
             }
         }
 
-
         private void ApplyLaserDamage(RaycastHit2D hit)
         {
             var health = hit.collider.GetComponentInParent<PlayerCharacterHealth>();
@@ -114,33 +100,32 @@ private void StopLaser()
         }
 
         [Rpc(source: RpcPeers.Everyone, target: RpcPeers.Proxies, isReliable: true)]
-private void RpcStartLaser(Vector2 startPoint, Vector2 endPoint)
-{
-    _laserRenderer.enabled = true;
-    _laserRenderer.SetPosition(0, startPoint);
-    _laserRenderer.SetPosition(1, endPoint);
-}
+        private void RpcStartLaser(Vector2 startPoint, Vector2 endPoint)
+        {
+            _laserRenderer.enabled = true;
+            _laserRenderer.SetPosition(0, startPoint);
+            _laserRenderer.SetPosition(1, endPoint);
+        }
 
-[Rpc(source: RpcPeers.Everyone, target: RpcPeers.Proxies, isReliable: true)]
-private void RpcStopLaser()
-{
-    _laserRenderer.enabled = false;
-}
+        [Rpc(source: RpcPeers.Everyone, target: RpcPeers.Proxies, isReliable: true)]
+        private void RpcStopLaser()
+        {
+            _laserRenderer.enabled = false;
+        }
 
+        // OnChanged callback for start point
+        [OnChanged(nameof(_laserStartPoint))]
+        private void OnLaserStartPointChanged(OnChangedData data)
+        {
+            _laserRenderer.SetPosition(0, _laserStartPoint);
+        }
 
-// OnChanged callback for start point
-[OnChanged(nameof(_laserStartPoint))]
-private void OnLaserStartPointChanged(OnChangedData data)
-{
-    _laserRenderer.SetPosition(0, _laserStartPoint);
-}
-
-// OnChanged callback for end point
-[OnChanged(nameof(_laserEndPoint))]
-private void OnLaserEndPointChanged(OnChangedData data)
-{
-    _laserRenderer.SetPosition(1, _laserEndPoint);
-}
+        // OnChanged callback for end point
+        [OnChanged(nameof(_laserEndPoint))]
+        private void OnLaserEndPointChanged(OnChangedData data)
+        {
+            _laserRenderer.SetPosition(1, _laserEndPoint);
+        }
 
     }
 }
