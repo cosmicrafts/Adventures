@@ -18,14 +18,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
         private PlayerEnergySystem _energySystem;
         private bool _isLaserActive;
         private PlayerCharacterWeapon _weapon;
-
-        [SerializeField] private RaycastType _raycastType;
-
-        public enum RaycastType
-        {
-            UnityPhysX,
-            NetickLagComp
-        }
+        public Transform _weaponTransform;
 
         public override void NetworkStart()
         {
@@ -66,30 +59,29 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             UpdateLaser(); // Initial update
         }
 
-        private void UpdateLaser()
-        {
-            if (_weapon == null) return; // Ensure _weapon is assigned
+private void UpdateLaser()
+{
+    if (_weapon == null || _weaponTransform == null) return;
 
-            // Use Degree from _weapon to align direction
-            Vector2 direction = _weapon.DegreesToDirection(_weapon.Degree); 
-            Vector2 originPoint = _weapon.GetWeaponOriginPoint(direction);
+    Vector2 direction = _weapon.DegreesToDirection(_weapon.Degree); 
+    Vector2 originPoint = _weaponTransform.position;
 
-            ShootingRaycastResult hitResult = default;
-            bool isHit = PerformRaycast(originPoint, direction, out hitResult);
+    ShootingRaycastResult hitResult = default;
+    bool isHit = PerformRaycast(originPoint, direction, out hitResult);
 
-            _laserRenderer.SetPosition(0, originPoint);
-            _laserRenderer.SetPosition(1, isHit ? hitResult.Point : originPoint + (direction * _distance));
+    _laserRenderer.SetPosition(0, originPoint);
+    _laserRenderer.SetPosition(1, isHit ? hitResult.Point : originPoint + (direction * _distance));
 
-            if (isHit)
-            {
-                ApplyLaserDamage(hitResult);
-                _energySystem.DeductEnergy(_laserEnergyCostPerTick);
-            }
-            else if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerTick))
-            {
-                StopLaser();
-            }
-        }
+    if (isHit)
+    {
+        ApplyLaserDamage(hitResult);
+        _energySystem.DeductEnergy(_laserEnergyCostPerTick);
+    }
+    else if (!_energySystem.HasEnoughEnergy(_laserEnergyCostPerTick))
+    {
+        StopLaser();
+    }
+}
 
         private void StopLaser()
         {
@@ -99,14 +91,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
         private bool PerformRaycast(Vector3 originPoint, Vector3 direction, out ShootingRaycastResult result)
         {
-#if NETICK_LAGCOMP
-            if (_raycastType == RaycastType.NetickLagComp)
-            {
-                bool isHit = Sandbox.Raycast2D(originPoint, direction, out LagCompHit2D hit, InputSource, _distance, _hitableLayer);
-                result = new ShootingRaycastResult { Point = hit.Point, HitObject = hit.GameObject.transform };
-                return isHit;
-            }
-#endif
             RaycastHit2D hit = Physics2D.Raycast(originPoint, direction, _distance, _hitableLayer);
             result = new ShootingRaycastResult { Point = hit.point, HitObject = hit.collider?.transform };
             return hit.collider != null;
@@ -114,17 +98,11 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
         private void ApplyLaserDamage(ShootingRaycastResult hitResult)
         {
-            if (hitResult.HitObject != null && TryGetComponentOrInParent(hitResult.HitObject, out PlayerCharacterHealth playerCharacterHealth))
+            if (hitResult.HitObject != null && _weapon.TryGetComponentOrInParent(hitResult.HitObject, out PlayerCharacterHealth playerCharacterHealth))
             {
                 float damageAmount = _laserDamagePerSecond * Sandbox.FixedDeltaTime;
                 playerCharacterHealth.DeductShieldAndHealth(damageAmount, transform);
             }
-        }
-
-        private bool TryGetComponentOrInParent<T>(Transform transform, out T component) where T : Component
-        {
-            component = transform.GetComponentInParent<T>();
-            return component != null;
         }
 
         public struct ShootingRaycastResult
