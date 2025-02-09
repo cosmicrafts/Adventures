@@ -179,8 +179,8 @@ public class SpaceProceduralGenerator : MonoBehaviour
             renderer.color = backgroundColor;
             chunk.transform.localScale = new Vector3(backgroundScaleFactor, backgroundScaleFactor, 1);
 
-            // Set the chunk's layer to Layer 6
-            chunk.layer = 0;
+            // Set the chunk's layer to Layer 6 (Ground)
+            chunk.layer = 6;
         }
 
         chunk.transform.position = new Vector3(chunkCoord.x * tileWorldSize, chunkCoord.y * tileWorldSize, 0);

@@ -383,7 +383,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &1163843127
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -411,7 +411,7 @@ Transform:
   m_GameObject: {fileID: 1163843126}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 97.20435, y: -3.3305023, z: -0.46829915}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -529,12 +529,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   speed: 2
   rotationSpeed: 360
-  maxHealth: 10
   attackCooldown: 1
-  bulletPrefab: {fileID: 6890065909177111848, guid: f395ff23a8403be45a928f05df7f4137, type: 3}
-  shootPoint: {fileID: 519934902}
-  bulletSpeed: 10
   shootingRange: 10
+  spriteTransform: {fileID: 0}
 --- !u!212 &1680993404
 SpriteRenderer:
   m_ObjectHideFlags: 0
@@ -1074,6 +1071,18 @@ PrefabInstance:
     - target: {fileID: 3873675673409209421, guid: aa9668fecaf82cf4485553ea241acd75, type: 3}
       propertyPath: orthographic size
       value: 8
+      objectReference: {fileID: 0}
+    - target: {fileID: 3873675673409209421, guid: aa9668fecaf82cf4485553ea241acd75, type: 3}
+      propertyPath: m_BackGroundColor.b
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3873675673409209421, guid: aa9668fecaf82cf4485553ea241acd75, type: 3}
+      propertyPath: m_BackGroundColor.g
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 3873675673409209421, guid: aa9668fecaf82cf4485553ea241acd75, type: 3}
+      propertyPath: m_BackGroundColor.r
+      value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 3873675673409209520, guid: aa9668fecaf82cf4485553ea241acd75, type: 3}
       propertyPath: m_DefaultBlend.m_Time
