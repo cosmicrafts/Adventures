@@ -6,6 +6,7 @@ using StinkySteak.N2D.Gameplay.Player.Character.Energy;  // Import the energy sy
 using UnityEngine;
 using StinkySteak.N2D.Gameplay.Player.Character.Skills;
 
+
 namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
 {
     public class PlayerCharacterMovement : NetworkBehaviour
@@ -17,7 +18,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
         [Networked] private Vector2 _dashDirection { get; set; } // Direction of the current dash
         [SerializeField] public PlayerCharacterWeapon _weapon;  // Reference to the weapon to get aiming direction
         [Networked] private Vector2 _currentTargetPosition { get; set; } = Vector2.zero;
-
+        [SerializeField] private Transform modelTransform;
         private PlayerEnergySystem _energySystem;
         [SerializeField] private DashSkillSO dashSkillSO;
         private CooldownUIManager cooldownUIManager;
@@ -31,40 +32,69 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
             cooldownUIManager = cdManagerObject?.GetComponent<CooldownUIManager>();
         }
 
-    public override void NetworkFixedUpdate()
+public override void NetworkFixedUpdate()
+{
+    if (FetchInput(out PlayerCharacterInput input))
     {
-        if (FetchInput(out PlayerCharacterInput input))
+        Vector2 moveDirection = Vector2.zero;
+
+        if (input.TargetPosition != Vector2.zero)
         {
-            // Check if a new target position has been set (right-click)
-            if (input.TargetPosition != Vector2.zero)
-            {
-                _currentTargetPosition = input.TargetPosition;
-            }
-
-            // Prioritize dash input regardless of movement state
-            if (input.Jump && _canDash && _energySystem.Energy >= dashSkillSO.energyCost)
-            {
-                StartDash();
-                return;
-            }
-
-
-            if (_isDashing)
-            {
-                ApplyDash();
-            }
-            else if (_currentTargetPosition != Vector2.zero) // Move toward the stored target position
-            {
-                MoveTowardTarget(_currentTargetPosition);
-            }
-            else
-            {
-                // Regular WASD movement
-                Vector2 inputDirection = new Vector2(input.HorizontalMove, input.VerticalMove).normalized;
-                _rigidbody2D.linearVelocity = inputDirection.magnitude > 0.1f ? _moveSpeed * inputDirection : Vector2.zero;
-            }
+            _currentTargetPosition = input.TargetPosition;
         }
+
+        if (input.Jump && _canDash && _energySystem.Energy >= dashSkillSO.energyCost)
+        {
+            StartDash();
+            return;
+        }
+
+        if (_isDashing)
+        {
+            ApplyDash();
+        }
+        else if (_currentTargetPosition != Vector2.zero)
+        {
+            MoveTowardTarget(_currentTargetPosition);
+            moveDirection = (_currentTargetPosition - (Vector2)transform.position).normalized;
+        }
+        else
+        {
+            moveDirection = new Vector2(input.HorizontalMove, input.VerticalMove).normalized;
+            _rigidbody2D.linearVelocity = moveDirection.magnitude > 0.1f ? _moveSpeed * moveDirection : Vector2.zero;
+        }
+
+        // **New Rotation Logic - Rotate Model Based on Weapon Direction**
+        ApplyModelRotation();
     }
+}
+
+private void ApplyModelRotation()
+{
+    if (_weapon == null || modelTransform == null)
+        return;
+
+    float weaponDegree = _weapon.Degree;
+    float rotationOffset = 45;  // Keeps the top-down tilt
+    float extraFaceRotation = 180f; // Adjust to properly face forward
+    float fixSideRotation = 90f; // **THIS should fix the final side issue**
+
+    // **Apply the original tilt (X-axis)**
+    Quaternion tiltCorrection = Quaternion.Euler(rotationOffset, 0f, 0f);
+    
+    // **Flip the weapon rotation (Z-axis) to fix inversion**
+    Quaternion weaponRotation = Quaternion.Euler(0f, 0f, -weaponDegree);
+    
+    // **Apply extra 180° rotation on Y-axis for proper facing**
+    Quaternion faceFixRotation = Quaternion.Euler(0f, extraFaceRotation, 0f);
+
+    // **NEW: Apply another 90° rotation on Z-axis to fix side issue**
+    Quaternion sideFixRotation = Quaternion.Euler(0f, 0f, fixSideRotation);
+
+    // **Combine all rotations properly**
+    modelTransform.rotation = sideFixRotation * faceFixRotation * weaponRotation * tiltCorrection;
+}
+
 
 
     private void MoveTowardTarget(Vector2 targetPosition)
