@@ -53,6 +53,7 @@ GameObject:
   - component: {fileID: 9011296098682904991}
   - component: {fileID: 7461456157858375419}
   - component: {fileID: 7282020275469313033}
+  - component: {fileID: 977540519112178893}
   m_Layer: 0
   m_Name: Player
   m_TagString: Player
@@ -337,6 +338,28 @@ MonoBehaviour:
   _weaponTransform: {fileID: 7993130619245119027}
   <_laserStartPoint>k__BackingField: {x: 0, y: 0}
   <_laserEndPoint>k__BackingField: {x: 0, y: 0}
+--- !u!114 &977540519112178893
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 462263736606742655}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cce4d1b83062faa44ae8695f97ab6c77, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  _targetTag: Untagged
+  _detectionRadius: 10
+  _targetLayerMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  _requireLineOfSight: 1
+  _aimSpread: 5
+  _targetCheckInterval: 0.2
+  _showGizmos: 1
+  _enableDebugLogs: 1
 --- !u!1 &462263736857771813
 GameObject:
   m_ObjectHideFlags: 0

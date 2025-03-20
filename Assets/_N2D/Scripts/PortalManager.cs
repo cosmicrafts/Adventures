@@ -17,6 +17,11 @@ public class PortalManager : NetworkBehaviour
     private Dictionary<int, Portal> portalRegistry = new Dictionary<int, Portal>();
     private Dictionary<int, float> objectLastTeleportTime = new Dictionary<int, float>();
     
+    // Track all player-related objects to avoid scene searches
+    private Dictionary<int, NetworkObject> trackedPlayerObjects = new Dictionary<int, NetworkObject>();
+    private List<NetworkObject> playerSessions = new List<NetworkObject>();
+    private List<NetworkObject> playerCharacters = new List<NetworkObject>();
+    
     private void Awake()
     {
         // Set up the singleton instance as early as possible
@@ -64,6 +69,33 @@ public class PortalManager : NetworkBehaviour
             {
                 RegisterPortal(portal);
             }
+            
+            // Pre-scan for player objects to avoid searching later
+            try
+            {
+                List<NetworkObject> networkObjects = ObjectFinder.FindFast<NetworkObject>();
+                foreach (var netObj in networkObjects)
+                {
+                    if (netObj == null) continue;
+                    
+                    try
+                    {
+                        // Track player-related objects
+                        if (netObj.name.Contains("PlayerSession") || 
+                            netObj.name.Contains("Player") || 
+                            netObj.GetComponent<PlayerCharacter>() != null)
+                        {
+                            RegisterPlayerObject(netObj);
+                        }
+                    }
+                    catch {}
+                }
+                Debug.Log($"[PortalManager] Pre-tracked {trackedPlayerObjects.Count} player objects");
+            }
+            catch (System.Exception ex)
+            {
+                Debug.LogWarning($"[PortalManager] Error pre-scanning for players: {ex.Message}");
+            }
         }
     }
     
@@ -93,6 +125,61 @@ public class PortalManager : NetworkBehaviour
         }
     }
     
+    // Register a player object for direct reference
+    public void RegisterPlayerObject(NetworkObject obj)
+    {
+        if (obj == null) return;
+        
+        try
+        {
+            int id = obj.Id;
+            
+            // Add to tracked objects dictionary
+            if (!trackedPlayerObjects.ContainsKey(id))
+            {
+                trackedPlayerObjects[id] = obj;
+                Debug.Log($"[PortalManager] Registered player object: {obj.name} (ID: {id})");
+                
+                // Categorize the object
+                if (obj.name.Contains("PlayerSession"))
+                {
+                    playerSessions.Add(obj);
+                }
+                else if (obj.GetComponent<PlayerCharacter>() != null)
+                {
+                    playerCharacters.Add(obj);
+                }
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[PortalManager] Error registering player object: {ex.Message}");
+        }
+    }
+    
+    // Remove a player object reference when destroyed
+    public void UnregisterPlayerObject(NetworkObject obj)
+    {
+        if (obj == null) return;
+        
+        try
+        {
+            int id = obj.Id;
+            
+            if (trackedPlayerObjects.ContainsKey(id))
+            {
+                trackedPlayerObjects.Remove(id);
+                playerSessions.Remove(obj);
+                playerCharacters.Remove(obj);
+                Debug.Log($"[PortalManager] Unregistered player object: {obj.name} (ID: {id})");
+            }
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogWarning($"[PortalManager] Error unregistering player object: {ex.Message}");
+        }
+    }
+    
     // Called directly from portal when an object enters
     public void HandlePortalEntry(NetworkObject networkObject, int destinationPortalId)
     {
@@ -109,6 +196,9 @@ public class PortalManager : NetworkBehaviour
                 Debug.LogWarning("[PortalManager] HandlePortalEntry received null object");
                 return;
             }
+            
+            // Register the object for future direct access
+            RegisterPlayerObject(networkObject);
             
             // Basic object info
             bool isPlayerCharacter = networkObject.GetComponent<PlayerCharacter>() != null;
@@ -140,75 +230,29 @@ public class PortalManager : NetworkBehaviour
             // Set cooldown
             objectLastTeleportTime[objectId] = currentTime;
             
-            Vector3 oldPosition = networkObject.transform.position;
+            // Teleport this object
+            TeleportObject(networkObject, destinationPortal.transform.position);
             
-            // Teleport object
-            networkObject.transform.position = destinationPortal.transform.position;
-            Debug.Log($"[PortalManager] Object {objectId} teleported from {oldPosition} to {destinationPortal.transform.position} (portal {destinationPortalId})");
-            
-            // If this is a player session, try to find and teleport the player character
+            // If this is a player session, directly teleport its related character
             if (isPlayerSession)
             {
-                int playerId = networkObject.Id;
-                Debug.Log($"[PortalManager] Session ID {playerId} teleported, looking for player character...");
+                int playerId = networkObject.Entity.InputSourcePlayerId;
+                Debug.Log($"[PortalManager] Player session teleported, looking for character with InputSourcePlayerId: {playerId}");
                 
-                // Simplified player character search that's more robust against null references
-                List<NetworkObject> networkObjects = null;
-                try 
+                // Look for the player character with matching InputSourcePlayerId
+                foreach (var character in playerCharacters)
                 {
-                    networkObjects = ObjectFinder.FindFast<NetworkObject>();
-                }
-                catch (System.Exception ex)
-                {
-                    Debug.LogError($"[PortalManager] Error finding network objects: {ex.Message}");
-                    return;
-                }
-                
-                if (networkObjects == null || networkObjects.Count == 0)
-                {
-                    Debug.LogWarning("[PortalManager] No network objects found in scene");
-                    return;
-                }
-                
-                // Look for player character objects with specific component types
-                foreach (NetworkObject netObj in networkObjects)
-                {
-                    // Skip nulls and the session itself
-                    if (netObj == null || netObj.Id == playerId)
-                        continue;
-                        
                     try
                     {
-                        // Check if it has a PlayerCharacter component
-                        if (netObj.GetComponent<PlayerCharacter>() != null)
+                        if (character != null && character.Entity.InputSourcePlayerId == playerId)
                         {
-                            // Verify it has at least one other player-related component to confirm it's a player character
-                            bool hasPlayerComponents = false;
-                            
-                            try 
-                            {
-                                hasPlayerComponents = 
-                                    netObj.GetComponent<StinkySteak.N2D.Gameplay.Player.Character.Movement.PlayerCharacterMovement>() != null ||
-                                    netObj.GetComponent<StinkySteak.N2D.Gameplay.Player.Character.Weapon.PlayerCharacterWeapon>() != null ||
-                                    netObj.GetComponent<StinkySteak.N2D.Gameplay.Player.Character.Health.PlayerCharacterHealth>() != null;
-                            }
-                            catch
-                            {
-                                // Ignore errors checking components
-                            }
-                            
-                            if (hasPlayerComponents)
-                            {
-                                Debug.Log($"[PortalManager] Found player character to teleport: {netObj.name} (ID: {netObj.Id})");
-                                netObj.transform.position = destinationPortal.transform.position;
-                                objectLastTeleportTime[netObj.Id] = currentTime;
-                                Debug.Log($"[PortalManager] Successfully teleported player character {netObj.Id} to portal {destinationPortalId}");
-                            }
+                            TeleportObject(character, destinationPortal.transform.position);
+                            Debug.Log($"[PortalManager] Teleported associated character: {character.name} (ID: {character.Id})");
                         }
                     }
                     catch (System.Exception ex)
                     {
-                        Debug.LogWarning($"[PortalManager] Error checking network object {netObj?.name}: {ex.Message}");
+                        Debug.LogWarning($"[PortalManager] Error checking character: {ex.Message}");
                     }
                 }
             }
@@ -281,69 +325,101 @@ public class PortalManager : NetworkBehaviour
             
             try
             {
-                // BRUTE FORCE: Get all GameObjects in the scene
-                var objects = GameObject.FindObjectsOfType<GameObject>();
-                Debug.Log($"[PortalManager] Found {objects.Length} total scene objects");
-                
-                // First teleport the exact match for player ID
-                foreach (var obj in objects)
+                // First try to teleport by direct reference
+                if (trackedPlayerObjects.TryGetValue(playerId, out NetworkObject directMatch))
                 {
-                    if (obj != null)
+                    TeleportObject(directMatch, targetPosition);
+                    teleportedAnything = true;
+                    Debug.Log($"[PortalManager] Teleported direct match: {directMatch.name} (ID: {playerId})");
+                }
+                
+                // If we have a direct match, also teleport the associated character 
+                if (teleportedAnything)
+                {
+                    // Look for player character objects with specific component types
+                    foreach (NetworkObject netObj in trackedPlayerObjects.Values)
                     {
-                        try
+                        if (netObj != null && netObj.Id == playerId)
                         {
-                            var netObj = obj.GetComponent<NetworkObject>();
-                            if (netObj != null && netObj.Id == playerId)
-                            {
-                                TeleportObject(netObj, targetPosition);
-                                teleportedAnything = true;
-                            }
+                            TeleportObject(netObj, targetPosition);
+                            Debug.Log($"[PortalManager] Teleported player object: {netObj.name}");
+                            teleportedAnything = true;
                         }
-                        catch {}
                     }
                 }
                 
-                // Teleport all player sessions
-                foreach (var obj in objects)
+                // FALLBACK: If our direct references failed, use a more expensive search
+                if (!teleportedAnything)
                 {
-                    if (obj != null)
+                    Debug.Log("[PortalManager] No tracked object found, using scene search fallback");
+                    
+                    // BRUTE FORCE: Get all GameObjects in the scene
+                    var objects = UnityEngine.Object.FindObjectsByType<GameObject>(FindObjectsSortMode.None);
+                    Debug.Log($"[PortalManager] Found {objects.Length} total scene objects");
+                    
+                    // First teleport the exact match for player ID
+                    foreach (var obj in objects)
                     {
-                        try
+                        if (obj != null)
                         {
-                            if (obj.name.Contains("PlayerSession"))
+                            try
                             {
                                 var netObj = obj.GetComponent<NetworkObject>();
-                                if (netObj != null)
+                                if (netObj != null && netObj.Id == playerId)
                                 {
                                     TeleportObject(netObj, targetPosition);
-                                    Debug.Log($"[PortalManager] Teleported session: {obj.name}");
+                                    RegisterPlayerObject(netObj); // Add to tracking
                                     teleportedAnything = true;
                                 }
                             }
+                            catch {}
                         }
-                        catch {}
                     }
-                }
-                
-                // Teleport anything with "Player" in the name
-                foreach (var obj in objects)
-                {
-                    if (obj != null)
+                    
+                    // Teleport all player sessions
+                    foreach (var obj in objects)
                     {
-                        try
+                        if (obj != null)
                         {
-                            if (obj.name.Contains("Player") || obj.name.Contains("Character"))
+                            try
                             {
-                                var netObj = obj.GetComponent<NetworkObject>();
-                                if (netObj != null)
+                                if (obj.name.Contains("PlayerSession"))
                                 {
-                                    TeleportObject(netObj, targetPosition);
-                                    Debug.Log($"[PortalManager] Teleported player object: {obj.name}");
-                                    teleportedAnything = true;
+                                    var netObj = obj.GetComponent<NetworkObject>();
+                                    if (netObj != null)
+                                    {
+                                        TeleportObject(netObj, targetPosition);
+                                        RegisterPlayerObject(netObj); // Add to tracking
+                                        Debug.Log($"[PortalManager] Teleported session: {obj.name}");
+                                        teleportedAnything = true;
+                                    }
                                 }
                             }
+                            catch {}
                         }
-                        catch {}
+                    }
+                    
+                    // Teleport anything with "Player" in the name
+                    foreach (var obj in objects)
+                    {
+                        if (obj != null)
+                        {
+                            try
+                            {
+                                if (obj.name.Contains("Player") || obj.name.Contains("Character"))
+                                {
+                                    var netObj = obj.GetComponent<NetworkObject>();
+                                    if (netObj != null)
+                                    {
+                                        TeleportObject(netObj, targetPosition);
+                                        RegisterPlayerObject(netObj); // Add to tracking
+                                        Debug.Log($"[PortalManager] Teleported player object: {obj.name}");
+                                        teleportedAnything = true;
+                                    }
+                                }
+                            }
+                            catch {}
+                        }
                     }
                 }
                 
@@ -413,21 +489,25 @@ public class PortalManager : NetworkBehaviour
         {
             Debug.Log($"[PortalManager] RPC_RequestTeleport received for destination {destinationPortalId}, player ID: {playerNetworkId}");
             
-            // If specific player ID was provided, use that directly
+            // If specific player ID was provided, use it to find the object
             if (playerNetworkId != -1)
             {
-                Debug.Log($"[PortalManager] Using provided player ID: {playerNetworkId}");
-                TeleportPlayerById(playerNetworkId, destinationPortalId);
-                return;
+                // First try our cached references
+                if (trackedPlayerObjects.TryGetValue(playerNetworkId, out NetworkObject playerObject))
+                {
+                    // We have the direct reference, use it
+                    Debug.Log($"[PortalManager] Found cached player object {playerObject.name} (ID: {playerNetworkId})");
+                    HandlePortalEntry(playerObject, destinationPortalId);
+                    return;
+                }
             }
             
-            // Legacy fallback logic if no player ID is provided
-            // Find input source object using ObjectFinder for better performance
+            // If we get here, we need to find the local player's input source
             List<NetworkObject> networkObjects = null;
             try
             {
                 networkObjects = ObjectFinder.FindFast<NetworkObject>();
-                Debug.Log($"[PortalManager] Found {networkObjects.Count} network objects in the scene");
+                Debug.Log($"[PortalManager] Looking for input source among {networkObjects.Count} network objects");
             }
             catch (System.Exception ex)
             {
@@ -435,66 +515,7 @@ public class PortalManager : NetworkBehaviour
                 return;
             }
             
-            if (networkObjects == null || networkObjects.Count == 0)
-            {
-                Debug.LogWarning("[PortalManager] No network objects found in the scene");
-                return;
-            }
-            
-            // Try different approaches to find the player object to teleport
-            
-            // Approach 1: Find PlayerSession
-            foreach (NetworkObject netObj in networkObjects)
-            {
-                if (netObj == null) continue;
-                
-                try
-                {
-                    if (netObj.name.Contains("PlayerSession") && netObj.IsInputSource)
-                    {
-                        Debug.Log($"[PortalManager] Found PlayerSession (ID: {netObj.Id}), using direct teleport");
-                        TeleportPlayerById(netObj.Id, destinationPortalId);
-                        return;
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    Debug.LogWarning($"[PortalManager] Error checking PlayerSession: {ex.Message}");
-                }
-            }
-            
-            // Approach 2: Search for PlayerCharacter
-            foreach (NetworkObject netObj in networkObjects)
-            {
-                if (netObj == null) continue;
-                
-                try
-                {
-                    if (netObj.GetComponent<PlayerCharacter>() != null)
-                    {
-                        Debug.Log($"[PortalManager] Found PlayerCharacter (ID: {netObj.Id}), teleporting directly");
-                        
-                        // Get the destination portal
-                        if (portalRegistry.TryGetValue(destinationPortalId, out Portal destinationPortal))
-                        {
-                            // Teleport character directly
-                            Vector3 oldPosition = netObj.transform.position;
-                            netObj.transform.position = destinationPortal.transform.position;
-                            objectLastTeleportTime[netObj.Id] = Time.time;
-                            
-                            Debug.Log($"[PortalManager] Teleported {netObj.name} from {oldPosition} to {destinationPortal.transform.position}");
-                            return;
-                        }
-                    }
-                }
-                catch (System.Exception ex)
-                {
-                    Debug.LogWarning($"[PortalManager] Error checking PlayerCharacter: {ex.Message}");
-                }
-            }
-            
-            // Approach 3: Find any InputSource as fallback
-            NetworkObject inputSource = null;
+            // Find any input source to teleport
             foreach (NetworkObject netObj in networkObjects)
             {
                 if (netObj == null) continue;
@@ -506,26 +527,16 @@ public class PortalManager : NetworkBehaviour
                     
                     if (isInputSource)
                     {
-                        inputSource = netObj;
+                        // We found an input source, use it
                         Debug.Log($"[PortalManager] Found input source: {netObj.name} (ID: {netObj.Id})");
-                        break;
+                        HandlePortalEntry(netObj, destinationPortalId);
+                        return;
                     }
                 }
-                catch (System.Exception ex)
-                {
-                    Debug.LogWarning($"[PortalManager] Error checking input source: {ex.Message}");
-                }
+                catch {}
             }
             
-            if (inputSource != null)
-            {
-                Debug.Log($"[PortalManager] Using HandlePortalEntry with input source {inputSource.name}");
-                HandlePortalEntry(inputSource, destinationPortalId);
-            }
-            else
-            {
-                Debug.LogWarning("[PortalManager] Could not find any player object to teleport");
-            }
+            Debug.LogWarning("[PortalManager] Could not find input source to teleport");
         }
         catch (System.Exception ex)
         {
