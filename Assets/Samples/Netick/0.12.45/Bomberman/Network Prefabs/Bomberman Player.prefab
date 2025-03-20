@@ -54,7 +54,7 @@ MonoBehaviour:
   AddToNetworkLoop: 1
   GlobalObjectIdHash: 0
   SceneId: -1
-  _PrefabId: 8
+  _PrefabId: 10
   PrefabRoot: {fileID: 0}
   Children: []
   PrefabIndex: -1

@@ -14,65 +14,77 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _Prefabs:
   - Obj: {fileID: 462263736606742652, guid: 1978a1f8cf362f2959c5cc160823986c, type: 3}
-    InstanceId: 29180
+    InstanceId: 28600
     Name: NPC
     FileName: Assets/_N2D/Prefabs/Gameplay/Player/Character/NPC.prefab
     GO: {fileID: 462263736606742655, guid: 1978a1f8cf362f2959c5cc160823986c, type: 3}
     Id: 1
+  - Obj: {fileID: 462263736606742652, guid: e2fe07bef02a9224c9b6cc28a7e72a8d, type: 3}
+    InstanceId: 30254
+    Name: Player 1
+    FileName: Assets/_N2D/Prefabs/Gameplay/Player/Character/Player 1.prefab
+    GO: {fileID: 462263736606742655, guid: e2fe07bef02a9224c9b6cc28a7e72a8d, type: 3}
+    Id: 2
   - Obj: {fileID: 462263736606742652, guid: 55f0b1aa9556a4f43b7f88a7451f34cd, type: 3}
-    InstanceId: 29184
+    InstanceId: 28766
     Name: Player
     FileName: Assets/_N2D/Prefabs/Gameplay/Player/Character/Player.prefab
     GO: {fileID: 462263736606742655, guid: 55f0b1aa9556a4f43b7f88a7451f34cd, type: 3}
-    Id: 2
+    Id: 3
+  - Obj: {fileID: 462263736606742652, guid: 9a90de7bf224df84fa1182c78a431198, type: 3}
+    InstanceId: 30256
+    Name: PlayerX
+    FileName: Assets/_N2D/Prefabs/Gameplay/Player/Character/PlayerX.prefab
+    GO: {fileID: 462263736606742655, guid: 9a90de7bf224df84fa1182c78a431198, type: 3}
+    Id: 4
   - Obj: {fileID: 68535350912409233, guid: 65efd385498aa4347b106615a6c8e875, type: 3}
-    InstanceId: 29188
+    InstanceId: 28762
     Name: PlayerSession
     FileName: Assets/_N2D/Prefabs/Gameplay/Player/Session/PlayerSession.prefab
     GO: {fileID: 68535350912409235, guid: 65efd385498aa4347b106615a6c8e875, type: 3}
-    Id: 3
+    Id: 5
   - Obj: {fileID: 462263736606742652, guid: 30a95f1efa5fc6ca798966e89d6efec7, type: 3}
-    InstanceId: 29192
+    InstanceId: 30292
     Name: Dreno
     FileName: Assets/Dreno.prefab
     GO: {fileID: 462263736606742655, guid: 30a95f1efa5fc6ca798966e89d6efec7, type: 3}
-    Id: 4
+    Id: 6
   - Obj: {fileID: 462263736606742652, guid: 08e4cd0fd46b7819b9da44c2bd55b98c, type: 3}
-    InstanceId: 29196
+    InstanceId: 30296
     Name: Marauder
     FileName: Assets/Marauder.prefab
     GO: {fileID: 462263736606742655, guid: 08e4cd0fd46b7819b9da44c2bd55b98c, type: 3}
-    Id: 5
+    Id: 7
   - Obj: {fileID: 462263736606742652, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
-    InstanceId: 29200
+    InstanceId: 30300
     Name: Raider
     FileName: Assets/Raider.prefab
     GO: {fileID: 462263736606742655, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
-    Id: 6
+    Id: 8
   - Obj: {fileID: 6276855212308729943, guid: 84bdaf9c034444f408cc66234ee3344d, type: 3}
-    InstanceId: 28970
+    InstanceId: 30304
     Name: Bomb
     FileName: Assets/Samples/Netick/0.12.45/Bomberman/Network Prefabs/Bomb.prefab
     GO: {fileID: 8886278785656527844, guid: 84bdaf9c034444f408cc66234ee3344d, type: 3}
-    Id: 7
+    Id: 9
   - Obj: {fileID: 8143126971102408644, guid: 98e433893a4b70f41a8ab2145afe3e07, type: 3}
-    InstanceId: 28968
+    InstanceId: 30308
     Name: Bomberman Player
     FileName: Assets/Samples/Netick/0.12.45/Bomberman/Network Prefabs/Bomberman Player.prefab
     GO: {fileID: 2511112182317059464, guid: 98e433893a4b70f41a8ab2145afe3e07, type: 3}
-    Id: 8
+    Id: 10
   - Obj: {fileID: 4469672062832013922, guid: 8e254087cbaecc049ac87981c263d46c, type: 3}
-    InstanceId: 28972
+    InstanceId: 30312
     Name: DestroyableBlock
     FileName: Assets/Samples/Netick/0.12.45/Bomberman/Network Prefabs/DestroyableBlock.prefab
     GO: {fileID: 9137365252298567970, guid: 8e254087cbaecc049ac87981c263d46c, type: 3}
-    Id: 9
+    Id: 11
   - Obj: {fileID: 9177126579482737267, guid: 09a0cccbd8f361641bd963785a4b016c, type: 3}
-    InstanceId: 28974
+    InstanceId: 30316
     Name: Power Up
     FileName: Assets/Samples/Netick/0.12.45/Bomberman/Network Prefabs/Power Up.prefab
     GO: {fileID: 3064325587269614628, guid: 09a0cccbd8f361641bd963785a4b016c, type: 3}
-    Id: 10
+    Id: 12
   TickRate: 45
   MaxPlayers: 128
   MaxObjects: 1024
