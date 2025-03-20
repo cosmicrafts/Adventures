@@ -291,7 +291,7 @@ GameObject:
   - component: {fileID: 935968785}
   - component: {fileID: 935968784}
   m_Layer: 0
-  m_Name: Dynamic Sprite
+  m_Name: PID-1-2
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -938,7 +938,7 @@ GameObject:
   - component: {fileID: 2086475261}
   - component: {fileID: 2086475260}
   m_Layer: 0
-  m_Name: Dynamic Sprite_1
+  m_Name: PID-2-1
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

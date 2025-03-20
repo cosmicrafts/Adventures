@@ -2,6 +2,8 @@ using Netick;
 using Netick.Unity;
 using UnityEngine;
 using System.Collections;
+using System.Collections.Generic;
+using StinkySteak.N2D.Finder;
 
 public class Portal : NetworkBehaviour
 {
@@ -270,62 +272,176 @@ public class Portal : NetworkBehaviour
             }
             
             bool isInputSource = false;
+            bool isPlayerCharacter = false;
+            
             try
             {
                 isInputSource = netObj.IsInputSource;
+                isPlayerCharacter = netObj.GetComponent<StinkySteak.N2D.Gameplay.Player.Character.PlayerCharacter>() != null;
+                
+                // Additional debug info
+                Debug.Log($"[Portal {portalId}] Collision object details: ID={netObj.Id}, Name={netObj.name}, " +
+                          $"IsInputSource={isInputSource}, IsPlayerCharacter={isPlayerCharacter}");
             }
-            catch (System.NullReferenceException)
+            catch (System.Exception ex)
             {
-                Debug.LogWarning($"[Portal {portalId}] Could not access IsInputSource property");
+                Debug.LogWarning($"[Portal {portalId}] Error getting object properties: {ex.Message}");
             }
-            
-            Debug.Log($"[Portal {portalId}] NetworkObject detected with ID: {netObj.Id}, IsInputSource: {isInputSource}, IsServer: {_isServer}");
             
             // Use the singleton instead of an inspector reference
-            if (PortalManager.Instance != null)
+            if (PortalManager.Instance == null)
             {
-                if (_isServer)
+                Debug.LogError($"[Portal {portalId}] Can't find PortalManager instance during collision handling!");
+                return;
+            }
+            
+            // IMPORTANT: Use server-authority handling when on server
+            if (_isServer)
+            {
+                Debug.Log($"[Portal {portalId}] Server is handling teleportation to portal {destinationPortalId}");
+                
+                // Special handling for player character
+                if (isPlayerCharacter)
                 {
-                    Debug.Log($"[Portal {portalId}] Server is handling teleportation to portal {destinationPortalId}");
-                    // On server, directly handle the teleportation for any NetworkObject
-                    PortalManager.Instance.HandlePortalEntry(netObj, destinationPortalId);
+                    Debug.Log($"[Portal {portalId}] Teleporting player character {netObj.name} (ID: {netObj.Id})");
                 }
-                else if (isInputSource)
+                
+                // On server, directly handle the teleportation for any NetworkObject
+                PortalManager.Instance.HandlePortalEntry(netObj, destinationPortalId);
+                return;
+            }
+            
+            // Client-side handling
+            // First try with RPC, then fallback to direct if needed
+            bool shouldTryTeleport = isInputSource || isPlayerCharacter;
+            
+            if (shouldTryTeleport)
+            {
+                Debug.Log($"[Portal {portalId}] Client is requesting teleportation for {netObj.name} to portal {destinationPortalId}");
+                
+                // Try RPC first
+                bool rpcSuccess = false;
+                try
                 {
-                    Debug.Log($"[Portal {portalId}] Client is requesting teleportation to portal {destinationPortalId}");
-                    // On client, request teleport from server
-                    bool rpcSuccess = false;
+                    PortalManager.Instance.RPC_RequestTeleport(destinationPortalId);
+                    rpcSuccess = true;
+                    Debug.Log($"[Portal {portalId}] RPC_RequestTeleport called successfully for {netObj.name}");
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogError($"[Portal {portalId}] Failed to call RPC_RequestTeleport: {ex.Message}");
+                }
+                
+                // If RPC failed, try direct teleport
+                if (!rpcSuccess)
+                {
+                    Debug.LogWarning($"[Portal {portalId}] RPC failed, attempting direct teleport as fallback");
+                    
                     try
                     {
-                        PortalManager.Instance.RPC_RequestTeleport(destinationPortalId);
-                        rpcSuccess = true;
-                        Debug.Log($"[Portal {portalId}] RPC_RequestTeleport called successfully");
+                        Debug.Log($"[Portal {portalId}] Looking for destination portal {destinationPortalId}");
+                        
+                        if (PortalManager.Instance.TryGetPortal(destinationPortalId, out Portal destPortal))
+                        {
+                            Debug.Log($"[Portal {portalId}] Found destination portal at {destPortal.transform.position}");
+                            
+                            // First try to get the local player character
+                            var playerChar = FindLocalPlayerCharacter();
+                            if (playerChar != null)
+                            {
+                                // Try moving the player character
+                                Vector3 oldPos = playerChar.transform.position;
+                                playerChar.transform.position = destPortal.transform.position;
+                                Debug.Log($"[Portal {portalId}] Direct teleport: Player character from {oldPos} to {destPortal.transform.position}");
+                            }
+                            else
+                            {
+                                // Fallback to the original network object
+                                Vector3 oldPos = netObj.transform.position;
+                                netObj.transform.position = destPortal.transform.position;
+                                Debug.Log($"[Portal {portalId}] Direct teleport: Object {netObj.name} from {oldPos} to {destPortal.transform.position}");
+                            }
+                        }
+                        else
+                        {
+                            Debug.LogWarning($"[Portal {portalId}] Couldn't find destination portal {destinationPortalId} for fallback teleport");
+                        }
                     }
                     catch (System.Exception ex)
                     {
-                        Debug.LogError($"[Portal {portalId}] Failed to call RPC_RequestTeleport: {ex.Message}");
+                        Debug.LogError($"[Portal {portalId}] Error in direct teleport fallback: {ex.Message}");
                     }
-                    
-                    // If RPC failed, use the direct teleport method as fallback
-                    if (!rpcSuccess)
-                    {
-                        Debug.LogWarning($"[Portal {portalId}] RPC failed, attempting direct teleport as fallback");
-                        PortalManager.Instance.DirectTeleport(netObj, destinationPortalId);
-                    }
-                }
-                else
-                {
-                    Debug.Log($"[Portal {portalId}] Object is not the input source, ignoring on client");
                 }
             }
             else
             {
-                Debug.LogWarning($"[Portal {portalId}] Can't find PortalManager instance during collision handling!");
+                Debug.Log($"[Portal {portalId}] Object is not player-controlled, ignoring on client");
             }
         }
         catch (System.Exception ex)
         {
             Debug.LogError($"[Portal {portalId}] Error in HandleCollision: {ex.Message}\n{ex.StackTrace}");
+        }
+    }
+    
+    // Helper method to find the local player character
+    private NetworkObject FindLocalPlayerCharacter()
+    {
+        try
+        {
+            // Try to find all network objects
+            List<NetworkObject> networkObjects = ObjectFinder.FindFast<NetworkObject>();
+            Debug.Log($"[Portal {portalId}] Looking for player character among {networkObjects.Count} network objects");
+            
+            // First look for player character with component
+            foreach (var netObj in networkObjects)
+            {
+                if (netObj == null) continue;
+                
+                try
+                {
+                    var playerCharacter = netObj.GetComponent<StinkySteak.N2D.Gameplay.Player.Character.PlayerCharacter>();
+                    if (playerCharacter != null)
+                    {
+                        bool isInputSource = false;
+                        try { isInputSource = netObj.IsInputSource; } catch {}
+                        
+                        Debug.Log($"[Portal {portalId}] Found player character: {netObj.name}, IsInputSource: {isInputSource}");
+                        return netObj;
+                    }
+                }
+                catch (System.Exception ex)
+                {
+                    Debug.LogWarning($"[Portal {portalId}] Error checking for PlayerCharacter: {ex.Message}");
+                }
+            }
+            
+            // If not found, look for input source
+            foreach (var netObj in networkObjects)
+            {
+                if (netObj == null) continue;
+                
+                try
+                {
+                    bool isInputSource = false;
+                    try { isInputSource = netObj.IsInputSource; } catch { continue; }
+                    
+                    if (isInputSource)
+                    {
+                        Debug.Log($"[Portal {portalId}] Found input source: {netObj.name}");
+                        return netObj;
+                    }
+                }
+                catch {}
+            }
+            
+            Debug.LogWarning($"[Portal {portalId}] Could not find player character");
+            return null;
+        }
+        catch (System.Exception ex)
+        {
+            Debug.LogError($"[Portal {portalId}] Error finding player character: {ex.Message}");
+            return null;
         }
     }
 }
