@@ -20,6 +20,7 @@ public class Portal : NetworkBehaviour
     
     private bool _hasRegistered = false;
     private bool _isNetworkInitialized = false;
+    private bool _isServer = false; // Cache the server state
     private float _lastRegistrationAttempt = 0f;
     private const float REGISTRATION_RETRY_INTERVAL = 0.5f;
     
@@ -68,8 +69,12 @@ public class Portal : NetworkBehaviour
         
         _isNetworkInitialized = true;
         
+        // Check if this is running on the server
+        _isServer = Sandbox.IsServer;
+        Debug.Log($"[Portal {portalId}] Direct server check: Sandbox.IsServer={Sandbox.IsServer}");
+        
         // Initialize the IsActive property on the server
-        if (IsServer)
+        if (_isServer)
         {
             try
             {
@@ -82,7 +87,7 @@ public class Portal : NetworkBehaviour
             }
         }
         
-        Debug.Log($"[Portal {portalId}] NetworkStart called. IsServer: {IsServer}, IsActive: {GetIsActive()}");
+        Debug.Log($"[Portal {portalId}] NetworkStart called. IsServer: {_isServer}, IsActive: {GetIsActive()}");
         UpdateVisuals();
         
         // Start trying to register with the manager
@@ -95,7 +100,7 @@ public class Portal : NetworkBehaviour
         
         int attempts = 0;
         // Keep trying until we successfully register
-        while (!_hasRegistered && IsServer)
+        while (!_hasRegistered && _isServer)
         {
             attempts++;
             
@@ -118,7 +123,7 @@ public class Portal : NetworkBehaviour
     // Try manual registration in fixed update as a backup
     public override void NetworkFixedUpdate()
     {
-        if (IsServer && !_hasRegistered && Time.time > _lastRegistrationAttempt + REGISTRATION_RETRY_INTERVAL)
+        if (_isServer && !_hasRegistered && Time.time > _lastRegistrationAttempt + REGISTRATION_RETRY_INTERVAL)
         {
             _lastRegistrationAttempt = Time.time;
             
@@ -208,7 +213,7 @@ public class Portal : NetworkBehaviour
         // Check by tag if possible
         try
         {
-            if (gameObject.CompareTag("NPC") || gameObject.CompareTag("Enemy"))
+            if (gameObject.tag == "NPC" || gameObject.tag == "Enemy")
                 return true;
         }
         catch (System.Exception) { }
@@ -274,32 +279,39 @@ public class Portal : NetworkBehaviour
                 Debug.LogWarning($"[Portal {portalId}] Could not access IsInputSource property");
             }
             
-            Debug.Log($"[Portal {portalId}] NetworkObject detected with ID: {netObj.Id}, IsInputSource: {isInputSource}");
+            Debug.Log($"[Portal {portalId}] NetworkObject detected with ID: {netObj.Id}, IsInputSource: {isInputSource}, IsServer: {_isServer}");
             
             // Use the singleton instead of an inspector reference
             if (PortalManager.Instance != null)
             {
-                bool isServer = false;
-                try
-                {
-                    isServer = IsServer;
-                }
-                catch (System.NullReferenceException)
-                {
-                    Debug.LogWarning($"[Portal {portalId}] Could not access IsServer property");
-                }
-                
-                if (isServer)
+                if (_isServer)
                 {
                     Debug.Log($"[Portal {portalId}] Server is handling teleportation to portal {destinationPortalId}");
-                    // On server, directly handle the teleportation
+                    // On server, directly handle the teleportation for any NetworkObject
                     PortalManager.Instance.HandlePortalEntry(netObj, destinationPortalId);
                 }
                 else if (isInputSource)
                 {
                     Debug.Log($"[Portal {portalId}] Client is requesting teleportation to portal {destinationPortalId}");
                     // On client, request teleport from server
-                    PortalManager.Instance.RPC_RequestTeleport(destinationPortalId);
+                    bool rpcSuccess = false;
+                    try
+                    {
+                        PortalManager.Instance.RPC_RequestTeleport(destinationPortalId);
+                        rpcSuccess = true;
+                        Debug.Log($"[Portal {portalId}] RPC_RequestTeleport called successfully");
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Debug.LogError($"[Portal {portalId}] Failed to call RPC_RequestTeleport: {ex.Message}");
+                    }
+                    
+                    // If RPC failed, use the direct teleport method as fallback
+                    if (!rpcSuccess)
+                    {
+                        Debug.LogWarning($"[Portal {portalId}] RPC failed, attempting direct teleport as fallback");
+                        PortalManager.Instance.DirectTeleport(netObj, destinationPortalId);
+                    }
                 }
                 else
                 {
