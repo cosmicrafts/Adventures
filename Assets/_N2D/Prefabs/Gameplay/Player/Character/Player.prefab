@@ -55,7 +55,7 @@ GameObject:
   - component: {fileID: 7282020275469313033}
   m_Layer: 0
   m_Name: Player
-  m_TagString: Untagged
+  m_TagString: Player
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -242,6 +242,7 @@ MonoBehaviour:
   _healthReplenishSpeed: 4
   _reflectPercentage: 0
   regenerativeShieldSO: {fileID: 11400000, guid: 10d2af1c9d1b773efa64e9b629359e05, type: 2}
+  enableReflectiveShield: 1
   <_health>k__BackingField: 0
   <_shield>k__BackingField: 0
 --- !u!114 &6290587020520711107
@@ -280,7 +281,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   _textNametag: {fileID: 5328359814833325024}
   _health: {fileID: 3541287404522835111}
-  _weapon: {fileID: -187163571796443866}
   _healthbar: {fileID: 508160093412112954}
   _shieldbar: {fileID: 4673852616754381821}
 --- !u!114 &9011296098682904991

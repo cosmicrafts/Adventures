@@ -907,6 +907,26 @@ Our quest system provides procedurally generated and hand-crafted missions that 
   - Multi-stage event progression
   - Server-wide coordination 
 
+using Netick;
+using UnityEngine;
+
+public struct ZoneData : INetworkStruct
+{
+    public int ZoneId;
+    public int Seed;
+    public int Difficulty;
+    public Vector2 SpawnPosition;
+    public ZoneType Type;
+}
+
+public enum ZoneType
+{
+    Lobby = 0,
+    Forest = 1,
+    Desert = 2,
+    Cave = 3
+}
+
 // Create this first - the foundation of everything
 public class ZoneManager : NetworkBehaviour
 {
