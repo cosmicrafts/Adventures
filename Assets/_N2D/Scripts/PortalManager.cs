@@ -374,7 +374,20 @@ public class PortalManager : NetworkBehaviour
             if (obj != null && obj.transform != null)
             {
                 Vector3 oldPos = obj.transform.position;
-                obj.transform.position = position;
+                
+                // Add a larger offset in a random direction from the portal to avoid immediate re-triggering
+                float offsetDistance = 4f; // Increase from 2f to 4f for more safety
+                float randomAngle = UnityEngine.Random.Range(0f, 360f) * Mathf.Deg2Rad;
+                Vector3 randomOffset = new Vector3(
+                    Mathf.Cos(randomAngle) * offsetDistance,
+                    Mathf.Sin(randomAngle) * offsetDistance,
+                    0f
+                );
+                
+                // Apply the offset to the position
+                Vector3 offsetPosition = position + randomOffset;
+                
+                obj.transform.position = offsetPosition;
                 
                 // Only set cooldown if we successfully teleported
                 try
@@ -384,7 +397,7 @@ public class PortalManager : NetworkBehaviour
                 }
                 catch {}
                 
-                Debug.Log($"[PortalManager] Teleported {obj.name} from {oldPos} to {position}");
+                Debug.Log($"[PortalManager] Teleported {obj.name} (ID: {obj.Id}) from {oldPos} to {offsetPosition} (with offset from portal)");
             }
         }
         catch (System.Exception ex)
@@ -394,12 +407,21 @@ public class PortalManager : NetworkBehaviour
     }
 
     [Rpc(source: RpcPeers.Everyone, target: RpcPeers.Owner, isReliable: true)]
-    public void RPC_RequestTeleport(int destinationPortalId)
+    public void RPC_RequestTeleport(int destinationPortalId, int playerNetworkId = -1)
     {
         try
         {
-            Debug.Log($"[PortalManager] RPC_RequestTeleport received for destination {destinationPortalId}");
+            Debug.Log($"[PortalManager] RPC_RequestTeleport received for destination {destinationPortalId}, player ID: {playerNetworkId}");
             
+            // If specific player ID was provided, use that directly
+            if (playerNetworkId != -1)
+            {
+                Debug.Log($"[PortalManager] Using provided player ID: {playerNetworkId}");
+                TeleportPlayerById(playerNetworkId, destinationPortalId);
+                return;
+            }
+            
+            // Legacy fallback logic if no player ID is provided
             // Find input source object using ObjectFinder for better performance
             List<NetworkObject> networkObjects = null;
             try

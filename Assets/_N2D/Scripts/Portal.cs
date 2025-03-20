@@ -11,12 +11,16 @@ public class Portal : NetworkBehaviour
     public int portalId;
     public int destinationPortalId;
     public Color portalColor = Color.blue;
+    [SerializeField] private float cooldownDuration = 2f; // Time in seconds before an object can teleport again
     
     [Header("References")]
     [SerializeField] private SpriteRenderer _portalRenderer;
     
     // Default value for IsActive when not initialized through network
     private bool _defaultActiveState = true;
+    
+    // Static dictionary to track cooldowns across all portals (object ID -> time when cooldown expires)
+    private static Dictionary<int, float> portalCooldowns = new Dictionary<int, float>();
     
     [Networked] public NetworkBool IsActive { get; set; }
     
@@ -25,6 +29,28 @@ public class Portal : NetworkBehaviour
     private bool _isServer = false; // Cache the server state
     private float _lastRegistrationAttempt = 0f;
     private const float REGISTRATION_RETRY_INTERVAL = 0.5f;
+    
+    // Check if an object is on cooldown
+    private bool IsObjectOnCooldown(int objectId)
+    {
+        if (portalCooldowns.TryGetValue(objectId, out float cooldownEndTime))
+        {
+            if (Time.time < cooldownEndTime)
+            {
+                float remainingTime = cooldownEndTime - Time.time;
+                Debug.Log($"[Portal {portalId}] Object {objectId} is on cooldown for another {remainingTime:F1} seconds");
+                return true;
+            }
+        }
+        return false;
+    }
+    
+    // Set cooldown for an object
+    private void SetObjectCooldown(int objectId)
+    {
+        portalCooldowns[objectId] = Time.time + cooldownDuration;
+        Debug.Log($"[Portal {portalId}] Set cooldown for object {objectId} for {cooldownDuration} seconds");
+    }
     
     // Safe accessor for IsActive that handles null reference cases
     private bool GetIsActive()
@@ -271,6 +297,13 @@ public class Portal : NetworkBehaviour
                 return;
             }
             
+            // Check if object is on teleport cooldown
+            if (IsObjectOnCooldown(netObj.Id))
+            {
+                // Object is on cooldown, skip teleportation
+                return;
+            }
+            
             bool isInputSource = false;
             bool isPlayerCharacter = false;
             
@@ -306,6 +339,9 @@ public class Portal : NetworkBehaviour
                     Debug.Log($"[Portal {portalId}] Teleporting player character {netObj.name} (ID: {netObj.Id})");
                 }
                 
+                // Set cooldown before teleporting
+                SetObjectCooldown(netObj.Id);
+                
                 // On server, directly handle the teleportation for any NetworkObject
                 PortalManager.Instance.HandlePortalEntry(netObj, destinationPortalId);
                 return;
@@ -319,11 +355,14 @@ public class Portal : NetworkBehaviour
             {
                 Debug.Log($"[Portal {portalId}] Client is requesting teleportation for {netObj.name} to portal {destinationPortalId}");
                 
-                // Try RPC first
+                // Set cooldown before teleporting
+                SetObjectCooldown(netObj.Id);
+                
+                // Try RPC first - IMPORTANT: Pass the actual network object ID that needs teleporting
                 bool rpcSuccess = false;
                 try
                 {
-                    PortalManager.Instance.RPC_RequestTeleport(destinationPortalId);
+                    PortalManager.Instance.RPC_RequestTeleport(destinationPortalId, netObj.Id);
                     rpcSuccess = true;
                     Debug.Log($"[Portal {portalId}] RPC_RequestTeleport called successfully for {netObj.name}");
                 }
