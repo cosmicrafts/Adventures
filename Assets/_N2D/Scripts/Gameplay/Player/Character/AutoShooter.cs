@@ -337,41 +337,55 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             base.NetworkUpdate();
             
             // Only run on server, and only when the bot is actively controlling
-            if (!IsServer || !_botEnabled || _isPlayerControlling) 
+            if (!IsServer || !_botEnabled) 
                 return;
             
-            // If we have a target, we can take action
-            if (_currentTarget != null && _allowCombatControl)
+            // CRITICAL: If player is controlling, DO NOT modify their aim at all
+            if (_isPlayerControlling)
+                return;
+            
+            // If we have a target, we can take action ONLY when bot is in full control
+            if (_currentTarget != null && _allowCombatControl && !_isPlayerControlling)
             {
-                // Get the current input
-                var input = Sandbox.GetInput<PlayerCharacterInput>();
-                
-                // Only override if we are not resimulating
-                if (!IsResimulating)
+                // Only take action if we are not resimulating
+                if (!IsResimulating && _weapon != null)
                 {
-                    // Calculate aim angle
-                    float aimAngle = _currentTarget != null ? _autoAimAngle : 0f;
+                    // CRITICAL: When in full bot mode, use direct weapon control methods instead of input
+                    // Calculate raw angle to target - this is the exact angle needed to hit the target
+                    Vector2 dirToTarget = (_currentTarget.position - transform.position);
                     
-                    // Modify the input with our bot's aim
-                    input.LookDegree = aimAngle;
+                    // Check if the direction vector is valid - avoid (0,0) direction
+                    float rawAimAngle;
+                    if (dirToTarget.sqrMagnitude < 0.001f) // Near zero check
+                    {
+                        // If direction is invalid, use current weapon angle instead of 0
+                        rawAimAngle = _weapon.Degree;
+                        
+                        DebugLog($"NetworkUpdate: Target too close, maintaining current aim: {rawAimAngle:F1}°", LogType.Warning);
+                    }
+                    else
+                    {
+                        // Normal calculation when direction is valid
+                        rawAimAngle = Mathf.Atan2(dirToTarget.y, dirToTarget.x) * Mathf.Rad2Deg;
+                    }
                     
-                    // Set firing flag if needed 
+                    // DIRECT CONTROL: Set the weapon's aim angle using the direct method
+                    _weapon.SetAimAngle(rawAimAngle);
+                    
+                    DebugLog($"NetworkUpdate: Direct weapon aim at angle {rawAimAngle:F1}°", LogType.Info);
+                    
+                    // DIRECT FIRE: Use the AutoFire method to fire directly
                     if (ShouldFire())
                     {
-                        input.IsFiring = true;
-                        DebugLog($"NetworkUpdate: Setting bot firing input with aim angle {aimAngle:F1}°", LogType.Info);
+                        bool fired = _weapon.AutoFire(rawAimAngle);
+                        if (fired)
+                        {
+                            DebugLog($"NetworkUpdate: Bot fired directly at angle {rawAimAngle:F1}°", LogType.Info);
+                        }
                     }
+                    
+                    // We DON'T modify the input at all anymore, using direct weapon control instead
                 }
-                
-                // If we're controlling movement too
-                if (_allowMovementControl && _lastMovementDirection.magnitude > 0.1f)
-                {
-                    input.HorizontalMove = _lastMovementDirection.x;
-                    input.VerticalMove = _lastMovementDirection.y;
-                }
-                
-                // Set input back
-                Sandbox.SetInput(input);
             }
         }
         #endregion
@@ -476,101 +490,106 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
         }
         
         // Hook into the player's input system to provide aim assist
-        // This runs even when the bot isn't controlling
+        // This method intentionally doesn't modify input anymore, using direct weapon control instead
         public bool ModifyInput(ref PlayerCharacterInput input)
         {
             if (!_botEnabled || !IsServer) return false;
             
-            // If using direct control mode, don't modify input
-            if (_useDirectControl)
+            // Never modify the input, but still perform some actions based on input state
+            
+            // If player is in control, apply optional aim assist using direct methods
+            if (_isPlayerControlling && _currentTarget != null && _rotateTowardsTarget && _aimAssistStrength > 0f)
             {
-                // Only apply aim assist if explicitly requested, even in direct control mode
-                if (_currentTarget != null && _rotateTowardsTarget && _aimAssistStrength > 0f)
-                {
-                    return ApplyAimAssist(ref input);
-                }
-                return false;
+                // Apply aim assist using direct weapon control, not input modification
+                ApplyAimAssist(ref input);
+                return false; // Return false because we're not modifying input
             }
             
-            bool wasModified = false;
-            
-            // If player is controlling or no target, just apply aim assist if needed
-            if (_isPlayerControlling || _currentTarget == null)
+            // If bot is in control and we have a target
+            if (!_isPlayerControlling && _currentTarget != null && _allowCombatControl)
             {
-                // Apply aim assist if we have a target
-                if (_currentTarget != null && _rotateTowardsTarget && _aimAssistStrength > 0f)
+                // Calculate aim angle
+                _autoAimAngle = CalculateAimAngle();
+                
+                // Apply direct aiming
+                if (IsServer && _weapon != null) 
                 {
-                    wasModified = ApplyAimAssist(ref input);
+                    _weapon.SetAimAngle(_autoAimAngle);
+                    DebugLog($"BOT AIM via direct method: {_autoAimAngle:F1}°");
                 }
-                return wasModified;
-            }
-            
-            // Bot is fully controlling
-            
-            // Calculate ideal auto-aim angle
-            _autoAimAngle = CalculateAimAngle();
-            
-            // Set aim direction if bot controls combat
-            if (_allowCombatControl)
-            {
-                float originalAngle = input.LookDegree;
-                input.LookDegree = _autoAimAngle;
                 
-                // If on server, also set aim angle directly
-                if (IsServer) _weapon.SetAimAngle(_autoAimAngle);
-                
-                wasModified = true;
-                DebugLog($"BOT AIM: {originalAngle:F1}° -> {_autoAimAngle:F1}°");
-                
-                // Set firing if needed
-                if (!input.IsFiring && ShouldFire())
+                // Handle firing via direct method
+                if (ShouldFire())
                 {
-                    input.IsFiring = true;
-                    wasModified = true;
-                    DebugLog($"BOT FIRING at angle {input.LookDegree:F1}°");
+                    if (IsServer && _weapon != null)
+                    {
+                        bool fired = _weapon.AutoFire(_autoAimAngle);
+                        if (fired)
+                        {
+                            DebugLog($"BOT FIRING via direct method at angle {_autoAimAngle:F1}°");
+                        }
+                    }
                 }
             }
             
-            // Set movement inputs if bot controls movement
-            if (_allowMovementControl)
-            {
-                Vector2 moveDirection = CalculateMoveDirection();
-                
-                if (moveDirection != Vector2.zero)
-                {
-                    input.HorizontalMove = moveDirection.x;
-                    input.VerticalMove = moveDirection.y;
-                    wasModified = true;
-                    
-                    DebugLog($"BOT MOVING: ({moveDirection.x:F1}, {moveDirection.y:F1})");
-                }
-            }
-            
-            return wasModified;
+            // We never modify the input anymore
+            return false;
         }
         
         private bool ApplyAimAssist(ref PlayerCharacterInput input)
         {
-            if (_currentTarget == null) return false;
+            if (_currentTarget == null || _weapon == null) return false;
             
-            float originalAngle = input.LookDegree;
+            // If player is not controlling (bot in full control), just set the aim directly
+            if (!_isPlayerControlling)
+            {
+                // Calculate ideal auto-aim angle
+                _autoAimAngle = CalculateAimAngle();
+                
+                // Directly control the weapon via the direct method, bypassing input completely
+                if (IsServer) _weapon.SetAimAngle(_autoAimAngle);
+                
+                // DON'T modify the input here at all
+                DebugLog($"Bot directly aiming at target via direct method: aim={_autoAimAngle:F1}°", LogType.Info);
+                return false; // Return false because we're not modifying input
+            }
             
-            // Calculate ideal auto-aim angle
-            _autoAimAngle = CalculateAimAngle();
+            // When player is controlling, we ONLY apply aim assist if explicitly requested
+            // and we do it via direct weapon control, not input modification
+            if (_rotateTowardsTarget && _aimAssistStrength > 0f)
+            {
+                // Player's original aim
+                float playerAim = input.LookDegree;
+                
+                // Calculate target aim
+                _autoAimAngle = CalculateAimAngle();
+                
+                // Calculate aim difference
+                float aimDifference = NormalizeAngleDifference(_autoAimAngle - playerAim);
+                
+                // Log diagnostic info
+                DebugLog($"Aim assist calculation: Player aim={playerAim:F1}°, Target aim={_autoAimAngle:F1}°, Difference={aimDifference:F1}°", LogType.Info);
+                
+                // If difference is very small, no need for assist
+                if (Mathf.Abs(aimDifference) < 5f)
+                {
+                    return false;
+                }
+                
+                // Calculate assisted aim (blend between player and target aim)
+                float assistStrength = Mathf.Clamp01(_aimAssistStrength);
+                float assistedAngle = Mathf.Lerp(playerAim, _autoAimAngle, assistStrength * 0.3f); // Reduce strength to be more subtle
+                
+                // Use direct method to slightly nudge weapon aim
+                if (IsServer) _weapon.SetAimAngle(assistedAngle);
+                
+                DebugLog($"Applied aim assist via direct weapon control: {playerAim:F1}° -> {assistedAngle:F1}° (Target={_autoAimAngle:F1}°)");
+                
+                // DON'T modify input at all - return false to indicate input wasn't changed
+                return false;
+            }
             
-            // Calculate the difference between player aim and auto aim
-            float aimDifference = NormalizeAngleDifference(_autoAimAngle - input.LookDegree);
-            
-            // Apply a small pull toward the target based on aim assist strength
-            float assistedAngle = input.LookDegree + (aimDifference * _aimAssistStrength * Sandbox.FixedDeltaTime * _aimSpeed);
-            input.LookDegree = assistedAngle;
-            
-            // If on server, also set aim angle directly
-            if (IsServer) _weapon.SetAimAngle(assistedAngle);
-            
-            DebugLog($"Applied aim assist: {originalAngle:F1}° -> {assistedAngle:F1}° (Target={_autoAimAngle:F1}°)");
-            
-            return true;
+            return false;
         }
         #endregion
         
@@ -915,24 +934,32 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
         
         private void FireAtTarget()
         {
-            if (_weapon == null) return;
+            if (_weapon == null || _currentTarget == null) return;
+            
+            // Calculate the exact angle to the target with no spread
+            Vector2 targetPos = _currentTarget.position;
+            Vector2 myPos = transform.position;
+            Vector2 direction = targetPos - myPos;
+            float directAngle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            
+            DebugLog($"Firing at target: {_currentTarget.name}, Direction: ({direction.x:F2}, {direction.y:F2}), Angle: {directAngle:F1}°", LogType.Info);
             
             if (_useDirectControl)
             {
                 if (_botInputData != null)
                 {
-                    // NETWORK METHOD - We're using InjectBotInput in NetworkFixedUpdate
-                    // No need to do anything here as the firing is handled via input injection
-                    DebugLog($"BOT FIRING at angle {_autoAimAngle:F1}° via network input", LogType.Info);
+                    // NETWORK METHOD - We're using input injection in NetworkUpdate
+                    // Just log for now - actual firing is handled via input system
+                    DebugLog($"BOT FIRING at angle {directAngle:F1}° via network input", LogType.Info);
                 }
                 else
                 {
                     // LEGACY DIRECT METHOD - only works locally
-                    bool fired = _weapon.FireDirectly(_autoAimAngle, true);
+                    bool fired = _weapon.FireDirectly(directAngle, true);
                     
                     if (fired)
                     {
-                        DebugLog($"BOT FIRED DIRECTLY at angle {_autoAimAngle:F1}°");
+                        DebugLog($"BOT FIRED DIRECTLY at angle {directAngle:F1}°");
                         _fireTimer = _fireInterval;
                     }
                 }
@@ -940,11 +967,11 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             else
             {
                 // Use RPC or indirect method
-                bool fired = _weapon.FireDirectly(_autoAimAngle, true);
+                bool fired = _weapon.FireDirectly(directAngle, true);
                 
                 if (fired)
                 {
-                    DebugLog($"BOT FIRED via indirect method at angle {_autoAimAngle:F1}°");
+                    DebugLog($"BOT FIRED via indirect method at angle {directAngle:F1}°");
                     _fireTimer = _fireInterval;
                 }
             }
@@ -1056,7 +1083,11 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
         
         private float CalculateAimAngle(bool precise = false)
         {
-            if (_currentTarget == null) return 0f;
+            if (_currentTarget == null) 
+            {
+                // Don't reset to 0 when no target, return current weapon angle instead
+                return _weapon != null ? _weapon.Degree : 0f;
+            }
             
             // Calculate direction to target
             Vector2 direction = _currentTarget.position - transform.position;
