@@ -25,6 +25,12 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
         [SerializeField] private bool _enableDebugLogs = true;
         [SerializeField] private bool _verboseDebugLogs = false; // More detailed logs
         
+        [Header("Auto-Aim Settings")]
+        [SerializeField] private bool _rotateTowardsTarget = true;
+        [SerializeField] private float _aimAssistStrength = 0.5f; // 0 = no assist, 1 = full auto-aim
+        [SerializeField] private float _playerAimThreshold = 0.1f; // How much player input is considered "actively aiming"
+        [SerializeField] private float _aimSpeed = 5f; // How fast to rotate towards target
+        
         // Internal references
         private PlayerCharacterWeapon _weapon;
         private Transform _currentTarget;
@@ -40,6 +46,10 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
         
         // Track original inputs
         private bool _playerIsAlreadyFiring = false;
+        
+        // Track recent player input for aim assistance
+        private float _lastPlayerAimInput = 0f;
+        private float _timeSincePlayerAimed = 0f;
         
         public override void NetworkStart()
         {
@@ -75,9 +85,8 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             // Only process on server
             if (!IsServer) return;
             
-            // Update timers
+            // Now we only need to update the target check timer
             _targetCheckTimer -= Sandbox.FixedDeltaTime;
-            _fireTimer -= Sandbox.FixedDeltaTime;
             
             // Find target periodically to save performance
             if (_targetCheckTimer <= 0)
@@ -165,43 +174,71 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             // We should only modify input on the server for consistency
             if (!IsServer) return false;
             
-            // Store if the player is already trying to fire
+            // Store original input
             _playerIsAlreadyFiring = input.IsFiring;
+            bool wasModified = false;
             
-            // No target, no need to modify input
+            // No target, no auto-shooting
             if (_currentTarget == null) return false;
             
-            // Calculate aim direction
+            // Calculate ideal auto-aim angle
             _autoAimAngle = CalculateAimAngle();
             
-            // If player is already firing, don't interfere with their input
-            if (input.IsFiring)
-            {
-                VerboseLog("Player is already firing, not overriding");
-                return false;
-            }
+            // Determine if player is actively aiming
+            bool isPlayerAiming = Mathf.Abs(input.LookDegree - _lastPlayerAimInput) > _playerAimThreshold;
             
-            // If we're ready to fire at a target
-            if (_fireTimer <= 0)
+            if (isPlayerAiming)
             {
-                // Only set automatic aim if player doesn't have a valid aim direction
-                // This prevents auto-aim from fighting with the player's manual aim
-                if (Mathf.Approximately(input.LookDegree, 0f))
+                // Player is actively providing aim input, update tracking
+                _lastPlayerAimInput = input.LookDegree;
+                _timeSincePlayerAimed = 0f;
+                
+                if (_rotateTowardsTarget && _aimAssistStrength > 0f)
                 {
-                    input.LookDegree = _autoAimAngle;
+                    float originalAngle = input.LookDegree;
+                    
+                    // Apply subtle aim assist - gently pull toward the target
+                    // Calculate the difference between player aim and auto aim
+                    float aimDifference = NormalizeAngleDifference(_autoAimAngle - input.LookDegree);
+                    
+                    // Apply a small pull toward the target based on aim assist strength
+                    float assistedAngle = input.LookDegree + (aimDifference * _aimAssistStrength * Sandbox.FixedDeltaTime * _aimSpeed);
+                    input.LookDegree = assistedAngle;
+                    wasModified = true;
+                    
+                    DebugLog($"Applied aim assist: Player={originalAngle:F1}° -> Assisted={assistedAngle:F1}° (Target={_autoAimAngle:F1}°)");
                 }
+            }
+            else
+            {
+                // Player isn't actively aiming
+                _timeSincePlayerAimed += Sandbox.FixedDeltaTime;
                 
-                // Set firing input
-                input.IsFiring = true;
-                
-                // Reset fire timer
-                _fireTimer = _fireInterval;
-                
-                DebugLog($"Auto-firing: Using angle {_autoAimAngle:F1}°");
-                return true;
+                if (_rotateTowardsTarget)
+                {
+                    float originalAngle = input.LookDegree;
+                    
+                    // Player isn't actively aiming, use full auto-aim
+                    // Just set directly to the target angle
+                    input.LookDegree = _autoAimAngle;
+                    wasModified = true;
+                    
+                    DebugLog($"FULL AUTO-AIM: {originalAngle:F1}° -> {_autoAimAngle:F1}°");
+                }
             }
             
-            return false;
+            // If player is not already firing, auto-fire
+            if (!input.IsFiring)
+            {
+                // Always set IsFiring = true when we have a target
+                // The weapon's own fire rate control will handle how fast it can actually fire
+                input.IsFiring = true;
+                wasModified = true;
+                
+                DebugLog($"Auto-firing at angle {input.LookDegree:F1}°");
+            }
+            
+            return wasModified;
         }
         
         private float CalculateAimAngle()
@@ -268,6 +305,18 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                 Gizmos.color = Color.red;
                 Gizmos.DrawLine(transform.position, _currentTarget.position);
             }
+        }
+        
+        // Normalizes angle difference to the -180 to 180 range
+        private float NormalizeAngleDifference(float angleDifference)
+        {
+            // Ensure the angle difference is in the -180 to 180 range
+            while (angleDifference > 180f)
+                angleDifference -= 360f;
+            while (angleDifference < -180f)
+                angleDifference += 360f;
+            
+            return angleDifference;
         }
     }
 } 

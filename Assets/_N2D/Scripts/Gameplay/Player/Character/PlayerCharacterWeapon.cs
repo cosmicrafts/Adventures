@@ -63,17 +63,38 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
         public override void NetworkFixedUpdate()
         {
-            ProcessAim();
-            ProcessShooting();
+            // Use a single input fetch that includes auto-shooter assistance
+            PlayerCharacterInput modifiedInput;
+            bool hasInput = GetInputWithAutoShooter(out modifiedInput);
+            
+            if (hasInput)
+            {
+                // Cache original degree for logging
+                float originalDegree = Degree;
+                
+                // Update aim direction
+                Degree = modifiedInput.LookDegree;
+                
+                // Log if the degree changed significantly
+                if (Mathf.Abs(originalDegree - Degree) > 1f)
+                {
+                    Debug.Log($"[PlayerCharacterWeapon] Weapon rotated: {originalDegree:F1}° -> {Degree:F1}°");
+                }
+                
+                // Process shooting with the same modified input
+                ProcessShootingWithInput(modifiedInput);
+            }
         }
-
+        
+        // Original ProcessAim is no longer needed since we combine aiming and shooting
+        // with the same modified input that includes AutoShooter assistance
         private void ProcessAim()
         {
             if (!FetchInput(out PlayerCharacterInput input)) return;
 
             Degree = input.LookDegree;
         }
-
+        
         public struct ShootingRaycastResult
         {
             public Transform HitObject;
@@ -110,12 +131,15 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             return false;
 #endif
         }
-
+        
         // This helper method checks if auto-shooter should modify the input
         private bool GetInputWithAutoShooter(out PlayerCharacterInput input)
         {
             // First get the regular input
             bool hasInput = FetchInput(out input);
+            
+            // Save original aim before AutoShooter modification
+            float originalAim = input.LookDegree;
             
             // If we have input and we have an AutoShooter component, allow it to modify the input
             if (hasInput)
@@ -124,18 +148,22 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
                 if (autoShooter != null)
                 {
                     // Let the AutoShooter modify the input (it will only change it if necessary)
-                    autoShooter.ModifyInput(ref input);
+                    bool wasModified = autoShooter.ModifyInput(ref input);
+                    
+                    if (wasModified)
+                    {
+                        // Log that input was modified
+                        Debug.Log($"[PlayerCharacterWeapon] Input modified: Aim {originalAim:F1}° -> {input.LookDegree:F1}°, IsFiring: {input.IsFiring}");
+                    }
                 }
             }
             
             return hasInput;
         }
-
-        private void ProcessShooting()
+        
+        // Renamed from ProcessShooting to clarify it uses provided input
+        private void ProcessShootingWithInput(PlayerCharacterInput input)
         {
-            // Use our helper method that integrates AutoShooter
-            if (!GetInputWithAutoShooter(out PlayerCharacterInput input)) return;
-
             if (!input.IsFiring) return;
 
             if (!_timerFireRate.IsExpiredOrNotRunning(Sandbox)) return;
@@ -145,6 +173,9 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             if (!_energySystem.HasEnoughEnergy(_energyCostPerShot)) return; // Check if enough energy to shoot
 
             _timerFireRate = TickTimer.CreateFromSeconds(Sandbox, _fireRate);
+            
+            // Log the firing direction
+            Debug.Log($"[PlayerCharacterWeapon] FIRING at angle {Degree:F1}°");
 
             Vector2 direction = DegreesToDirection(Degree);
             Vector2 originPoint = GetWeaponOriginPoint(direction);
@@ -192,6 +223,16 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
                 OriginPosition = originPoint,
                 IsHitPlayer = isHitPlayer,
             };
+        }
+        
+        // Original ProcessShooting - keep this for compatibility but redirect to new method
+        private void ProcessShooting()
+        {
+            // Use our helper method that integrates AutoShooter
+            if (!GetInputWithAutoShooter(out PlayerCharacterInput input)) return;
+            
+            // Pass to the renamed method that actually does the shooting work
+            ProcessShootingWithInput(input);
         }
 
         public bool TryGetComponentOrInParent<T>(Transform transform, out T component) where T : Component
