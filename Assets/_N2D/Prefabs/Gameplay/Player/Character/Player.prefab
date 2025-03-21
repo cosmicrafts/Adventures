@@ -356,10 +356,29 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 4294967295
   _requireLineOfSight: 1
-  _aimSpread: 5
   _targetCheckInterval: 0.2
+  _fireInterval: 0.5
+  _aimSpread: 5
+  _movementRadius: 15
+  _combatMoveSpeed: 3
+  _wanderMoveSpeed: 2
+  _positionUpdateInterval: 1.5
+  _idealCombatDistance: 6
+  _minimumCombatDistance: 4
+  _botEnabled: 1
+  _playerInactivityTimeout: 2
+  _allowMovementControl: 1
+  _allowCombatControl: 1
+  _behaviorType: 2
+  _useDirectControl: 1
   _showGizmos: 1
   _enableDebugLogs: 1
+  _verboseDebugLogs: 1
+  _rotateTowardsTarget: 1
+  _aimAssistStrength: 0.5
+  _playerAimThreshold: 0.1
+  _aimSpeed: 5
+  _energyCostPerShot: 1
 --- !u!1 &462263736857771813
 GameObject:
   m_ObjectHideFlags: 0

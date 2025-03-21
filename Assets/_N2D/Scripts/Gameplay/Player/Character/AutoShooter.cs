@@ -106,6 +106,16 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
         private float _timeSincePlayerAimed = 0f;
         private float _timeSincePlayerMoved = 0f;
         
+        // Class to hold the entity info for our automated input
+        private class BotInputData
+        {
+            public int PlayerId;
+            public Entity Entity;
+            public bool HasCreatedSource;
+        }
+        
+        private BotInputData _botInputData;
+        
         // Special method for direct firing at a target angle
         public bool AutoFire(float aimAngle)
         {
@@ -168,6 +178,12 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             _startPosition = transform.position;
             _currentState = BotState.Idle;
             
+            // Set up bot input system
+            if (IsServer && _useDirectControl)
+            {
+                SetupBotInputSystem();
+            }
+            
             // Create visual indicators if debug is enabled
             if (_showGizmos)
             {
@@ -175,6 +191,76 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             }
             
             DebugLog("AutoShooter initialized in " + _behaviorType + " mode");
+        }
+        
+        private void SetupBotInputSystem()
+        {
+            try
+            {
+                // Store the entity this bot is attached to
+                _botInputData = new BotInputData
+                {
+                    Entity = Object.Entity,
+                    PlayerId = Object.Entity.InputSourcePlayerId,
+                    HasCreatedSource = false
+                };
+                
+                // Important: We DON'T change the InputSource here
+                // We just piggyback on the existing input source
+                // This allows the bot to act as a "phantom" that injects inputs
+                // when the player isn't providing any
+                
+                DebugLog($"Bot input system initialized for entity with playerId {_botInputData.PlayerId}", LogType.Info);
+            }
+            catch (System.Exception ex)
+            {
+                DebugLog($"Failed to setup bot input system: {ex.Message}", LogType.Error);
+            }
+        }
+        
+        // Injects bot-generated input directly into Netick
+        private void InjectBotInput(float lookDegree, Vector2 moveDirection, bool isFiring)
+        {
+            if (!IsServer)
+            {
+                DebugLog("InjectBotInput: Not running on server, input injection skipped", LogType.Warning);
+                return;
+            }
+            
+            if (_botInputData == null)
+            {
+                DebugLog("InjectBotInput: _botInputData is null, input injection skipped", LogType.Warning);
+                return;
+            }
+            
+            try
+            {
+                DebugLog($"InjectBotInput: Starting input injection with aim={lookDegree:F1}°, move=({moveDirection.x:F1},{moveDirection.y:F1}), fire={isFiring}", LogType.Info);
+                
+                // Get the current input struct - this is the key to proper Netick integration
+                var botInput = Sandbox.GetInput<PlayerCharacterInput>();
+                
+                // Modify the input with our bot's desired actions
+                botInput.LookDegree = lookDegree;
+                botInput.HorizontalMove = moveDirection.x;
+                botInput.VerticalMove = moveDirection.y;
+                botInput.IsFiring = isFiring;
+                
+                // These values are typically not changed by the bot
+                // but we could set them if needed
+                botInput.Jump = false;
+                botInput.ActivateRegenerativeShield = false;
+                botInput.TargetPosition = Vector2.zero; // Clear any existing target position
+                
+                // Set the modified input back to Netick
+                Sandbox.SetInput(botInput);
+                
+                DebugLog($"InjectBotInput: Successfully injected bot input: Aim={lookDegree:F1}°, Move=({moveDirection.x:F1},{moveDirection.y:F1}), Fire={isFiring}", LogType.Info);
+            }
+            catch (System.Exception ex)
+            {
+                DebugLog($"Failed to inject bot input: {ex.Message}", LogType.Error);
+            }
         }
         
         public override void NetworkFixedUpdate()
@@ -208,13 +294,24 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             // Execute current state behavior
             ExecuteStateLogic();
             
-            // If we're using direct control, apply movement and weapon control directly
+            // If we're using direct control, handle it differently based on whether we're using network input injection
             if (_useDirectControl)
             {
-                // Apply weapon aim directly
-                if (_allowCombatControl && _weapon != null && _currentTarget != null)
+                // Just update state and cache our target aim and movement
+                // The actual input injection happens in NetworkUpdate
+                if (_botInputData != null)
                 {
-                    _weapon.SetAimAngle(_autoAimAngle);
+                    // Just cache these values for use in NetworkUpdate
+                    _autoAimAngle = _currentTarget != null ? CalculateAimAngle() : 0f;
+                }
+                else
+                {
+                    // LEGACY APPROACH - only works locally
+                    // Apply weapon aim directly
+                    if (_allowCombatControl && _weapon != null && _currentTarget != null)
+                    {
+                        _weapon.SetAimAngle(_autoAimAngle);
+                    }
                 }
             }
             
@@ -231,6 +328,50 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             if (_isPlayerControlling)
             {
                 _timeSincePlayerInput += Sandbox.FixedDeltaTime;
+            }
+        }
+        
+        // Override NetworkUpdate to inject our inputs in the same place as LocalInputProvider
+        public override void NetworkUpdate()
+        {
+            base.NetworkUpdate();
+            
+            // Only run on server, and only when the bot is actively controlling
+            if (!IsServer || !_botEnabled || _isPlayerControlling) 
+                return;
+            
+            // If we have a target, we can take action
+            if (_currentTarget != null && _allowCombatControl)
+            {
+                // Get the current input
+                var input = Sandbox.GetInput<PlayerCharacterInput>();
+                
+                // Only override if we are not resimulating
+                if (!IsResimulating)
+                {
+                    // Calculate aim angle
+                    float aimAngle = _currentTarget != null ? _autoAimAngle : 0f;
+                    
+                    // Modify the input with our bot's aim
+                    input.LookDegree = aimAngle;
+                    
+                    // Set firing flag if needed 
+                    if (ShouldFire())
+                    {
+                        input.IsFiring = true;
+                        DebugLog($"NetworkUpdate: Setting bot firing input with aim angle {aimAngle:F1}°", LogType.Info);
+                    }
+                }
+                
+                // If we're controlling movement too
+                if (_allowMovementControl && _lastMovementDirection.magnitude > 0.1f)
+                {
+                    input.HorizontalMove = _lastMovementDirection.x;
+                    input.VerticalMove = _lastMovementDirection.y;
+                }
+                
+                // Set input back
+                Sandbox.SetInput(input);
             }
         }
         #endregion
@@ -778,13 +919,22 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             
             if (_useDirectControl)
             {
-                // Use direct firing method
-                bool fired = _weapon.FireDirectly(_autoAimAngle, true);
-                
-                if (fired)
+                if (_botInputData != null)
                 {
-                    DebugLog($"BOT FIRED DIRECTLY at angle {_autoAimAngle:F1}°");
-                    _fireTimer = _fireInterval;
+                    // NETWORK METHOD - We're using InjectBotInput in NetworkFixedUpdate
+                    // No need to do anything here as the firing is handled via input injection
+                    DebugLog($"BOT FIRING at angle {_autoAimAngle:F1}° via network input", LogType.Info);
+                }
+                else
+                {
+                    // LEGACY DIRECT METHOD - only works locally
+                    bool fired = _weapon.FireDirectly(_autoAimAngle, true);
+                    
+                    if (fired)
+                    {
+                        DebugLog($"BOT FIRED DIRECTLY at angle {_autoAimAngle:F1}°");
+                        _fireTimer = _fireInterval;
+                    }
                 }
             }
             else
@@ -1016,10 +1166,23 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                 }
                 else
                 {
+                    // Skip creating a second LineRenderer if the platform doesn't support it
+                    // or if we already have issues with the first one
+                    if (existingRenderers == null || existingRenderers.Length == 0 || _aimLine == null)
+                    {
+                        DebugLog("Skipping second LineRenderer - platform might not support multiple renderers", LogType.Info);
+                        return;
+                    }
+                    
                     // Carefully create the second line renderer
                     try {
+                        // Create a separate GameObject for the second line renderer to avoid conflicts
+                        GameObject lineObj = new GameObject("MovementLine");
+                        lineObj.transform.SetParent(transform);
+                        lineObj.transform.localPosition = Vector3.zero;
+                        
                         // Create movement line
-                        _movementLine = gameObject.AddComponent<LineRenderer>();
+                        _movementLine = lineObj.AddComponent<LineRenderer>();
                         if (_movementLine == null)
                         {
                             DebugLog("Failed to add second LineRenderer component - proceeding with just one", LogType.Warning);
@@ -1060,34 +1223,43 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
         {
             if (!_showGizmos) return;
             
-            // Update aiming line
-            if (_aimLine != null)
+            try
             {
-                if (_currentTarget != null)
+                // Update aiming line
+                if (_aimLine != null)
                 {
-                    _aimLine.enabled = true;
-                    _aimLine.SetPosition(0, transform.position);
-                    _aimLine.SetPosition(1, _currentTarget.position);
+                    if (_currentTarget != null)
+                    {
+                        _aimLine.enabled = true;
+                        _aimLine.SetPosition(0, transform.position);
+                        _aimLine.SetPosition(1, _currentTarget.position);
+                    }
+                    else
+                    {
+                        _aimLine.enabled = false;
+                    }
                 }
-                else
+                
+                // Update movement line
+                if (_movementLine != null)
                 {
-                    _aimLine.enabled = false;
+                    if (_targetPosition != Vector2.zero && _lastMovementDirection.magnitude > 0.1f)
+                    {
+                        _movementLine.enabled = true;
+                        _movementLine.SetPosition(0, transform.position);
+                        _movementLine.SetPosition(1, _targetPosition);
+                    }
+                    else
+                    {
+                        _movementLine.enabled = false;
+                    }
                 }
             }
-            
-            // Update movement line
-            if (_movementLine != null)
+            catch (System.Exception ex)
             {
-                if (_targetPosition != Vector2.zero && _lastMovementDirection.magnitude > 0.1f)
-                {
-                    _movementLine.enabled = true;
-                    _movementLine.SetPosition(0, transform.position);
-                    _movementLine.SetPosition(1, _targetPosition);
-                }
-                else
-                {
-                    _movementLine.enabled = false;
-                }
+                // If visualization fails, just disable it
+                _showGizmos = false;
+                DebugLog($"Error in visualization, disabling: {ex.Message}", LogType.Warning);
             }
         }
         
@@ -1168,6 +1340,17 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                 // Silent fail for gizmos - they're just visual aids
                 // Disable to prevent future errors
                 _showGizmos = false;
+            }
+        }
+        
+        public override void NetworkDestroy()
+        {
+            base.NetworkDestroy();
+            
+            // Clean up any created visual objects
+            if (_movementLine != null && _movementLine.gameObject != gameObject)
+            {
+                Destroy(_movementLine.gameObject);
             }
         }
         #endregion
