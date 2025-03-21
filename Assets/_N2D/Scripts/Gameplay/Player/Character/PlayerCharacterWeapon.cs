@@ -78,7 +78,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
                 // Log if the degree changed significantly
                 if (Mathf.Abs(originalDegree - Degree) > 1f)
                 {
-                    Debug.Log($"[PlayerCharacterWeapon] Weapon rotated: {originalDegree:F1}° -> {Degree:F1}°");
+                   // Debug.Log($"[PlayerCharacterWeapon] Weapon rotated: {originalDegree:F1}° -> {Degree:F1}°");
                 }
                 
                 // Process shooting with the same modified input
@@ -174,18 +174,16 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
             _timerFireRate = TickTimer.CreateFromSeconds(Sandbox, _fireRate);
             
-            // Log the firing direction
+            // Log the firing direction and angle
             Debug.Log($"[PlayerCharacterWeapon] FIRING at angle {Degree:F1}°");
 
-            // IMPORTANT: Use the most up-to-date aim direction from the input
-            // instead of the class property which might have been changed by other code
-            float firingAngle = input.LookDegree;
-            
-            // Ensure we're using the exact angle for firing
-            Vector2 direction = DegreesToDirection(firingAngle);
+            // CRITICAL: Use the Degree property to calculate the firing direction
+            Vector2 direction = DegreesToDirection(Degree);
             Vector2 originPoint = GetWeaponOriginPoint(direction);
             
-            Debug.Log($"[PlayerCharacterWeapon] Direction vector: {direction}, calculated from angle: {firingAngle:F1}°");
+            // Debug visualization of firing direction
+            Debug.DrawRay(originPoint, direction * 10f, Color.red, 1.0f);
+            Debug.Log($"[PlayerCharacterWeapon] Firing vector: ({direction.x:F3}, {direction.y:F3}) from angle {Degree:F1}°");
 
             ShootingRaycastResult hitResult = default;
             bool isHit = false;
@@ -271,10 +269,14 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 
         public Vector2 DegreesToDirection(float degrees)
         {
+            // Convert to radians and calculate direction vector
             float radians = degrees * Mathf.Deg2Rad;
 
             float x = Mathf.Cos(radians);
             float y = Mathf.Sin(radians);
+
+            // Debug to verify conversion
+            Debug.Log($"[PlayerCharacterWeapon] DegreesToDirection: {degrees:F1}° -> ({x:F3}, {y:F3})");
 
             return new Vector2(x, y);
         }
@@ -360,6 +362,93 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             };
             
             return true;
+        }
+
+        // Special method for AutoShooter to directly fire at an angle without using the input system
+        public bool AutoFire(float aimAngle)
+        {
+            if (!IsServer) return false;
+            
+            // Check fire rate and energy
+            if (!_timerFireRate.IsExpiredOrNotRunning(Sandbox)) return false;
+            if (!_energySystem.HasEnoughEnergy(_energyCostPerShot)) return false;
+            
+            // Set fire rate timer
+            _timerFireRate = TickTimer.CreateFromSeconds(Sandbox, _fireRate);
+            
+            Debug.Log($"[PlayerCharacterWeapon] AUTO-FIRING directly at angle {aimAngle:F1}°");
+            
+            // Use the provided angle directly without affecting the weapon's rotation
+            Vector2 direction = DegreesToDirectionRaw(aimAngle);
+            Vector2 originPoint = GetWeaponOriginPoint(direction);
+            
+            // Debug visualization
+            Debug.DrawRay(originPoint, direction * 20f, Color.blue, 1.0f);
+            
+            // Perform the raycast
+            ShootingRaycastResult hitResult = default;
+            bool isHit = false;
+            
+            if (_raycastType == RaycastType.UnityPhysX)
+            {
+                isHit = ShootUnity(originPoint, direction, out hitResult);
+            }
+            else if (_raycastType == RaycastType.NetickLagComp)
+            {
+                isHit = ShootLagComp(originPoint, direction, out hitResult);
+            }
+            
+            // Deduct energy
+            _energySystem.DeductEnergy(_energyCostPerShot);
+            
+            // Process hit results
+            if (!isHit)
+            {
+                Vector2 fakeHitPosition = originPoint + (direction * 1000f);
+                
+                _lastProjectileHit = new ProjectileHit()
+                {
+                    Tick = Sandbox.Tick.TickValue,
+                    HitPosition = fakeHitPosition,
+                    OriginPosition = originPoint,
+                    IsHitPlayer = false,
+                };
+                
+                return true;
+            }
+            
+            bool isHitPlayer = false;
+            
+            if (TryGetComponentOrInParent(hitResult.HitObject, out PlayerCharacterHealth playerCharacterHealth))
+            {
+                isHitPlayer = true;
+                playerCharacterHealth.DeductShieldAndHealth(_damage, transform);
+            }
+            
+            _lastProjectileHit = new ProjectileHit()
+            {
+                Tick = Sandbox.Tick.TickValue,
+                HitPosition = hitResult.Point,
+                OriginPosition = originPoint,
+                IsHitPlayer = isHitPlayer,
+            };
+            
+            return true;
+        }
+        
+        // Raw direction calculation that doesn't log - for internal use
+        private Vector2 DegreesToDirectionRaw(float degrees)
+        {
+            float radians = degrees * Mathf.Deg2Rad;
+            return new Vector2(Mathf.Cos(radians), Mathf.Sin(radians));
+        }
+
+        // Helper method to set the Degree property from AutoShooter
+        public void SetAimAngle(float angle)
+        {
+            if (!IsServer) return;
+            Degree = angle;
+            Debug.Log($"[PlayerCharacterWeapon] Weapon aim angle set to {angle:F1}°");
         }
     }
 }
