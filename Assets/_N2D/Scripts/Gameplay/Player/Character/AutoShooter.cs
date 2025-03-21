@@ -1,8 +1,9 @@
 using UnityEngine;
 using Netick.Unity;
+using Netick;
 using StinkySteak.N2D.Gameplay.PlayerInput;
 using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
-using System.Reflection;
+using System;
 
 namespace StinkySteak.N2D.Gameplay.Player.Character
 {
@@ -13,32 +14,32 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
         [SerializeField] private float _detectionRadius = 10f;
         [SerializeField] private LayerMask _targetLayerMask = -1;
         [SerializeField] private bool _requireLineOfSight = true;
+        [SerializeField] private float _targetCheckInterval = 0.2f; // How often to look for targets (seconds)
         
         [Header("Shooting")]
-        [SerializeField] private float _aimSpread = 5f;
-        [SerializeField] private float _targetCheckInterval = 0.2f; // How often to look for targets (seconds)
         [SerializeField] private float _fireInterval = 0.5f; // Time between shots
+        [SerializeField] private float _aimSpread = 5f; // Random spread for more natural shooting
         
         [Header("Debug")]
         [SerializeField] private bool _showGizmos = true;
         [SerializeField] private bool _enableDebugLogs = true;
-        [SerializeField] private bool _directProcessShootingCall = true; // Directly call weapon's shooting method
+        [SerializeField] private bool _verboseDebugLogs = false; // More detailed logs
         
         // Internal references
         private PlayerCharacterWeapon _weapon;
-        private PlayerCharacterWeaponVisual _weaponVisual;
         private Transform _currentTarget;
         private float _targetCheckTimer;
-        private float _fireTimer;
-        
-        // Reflection for direct access to weapon methods
-        private MethodInfo _processShootingMethod;
-        private MethodInfo _fetchInputMethod;
-        private PropertyInfo _degreeProperty;
+        private float _fireTimer;  // Simple non-networked timer
+        private bool _wasTargeting = false;
         
         // Visual indicator for aiming
         private LineRenderer _aimLine;
-        private bool _wasTargeting = false;
+        
+        // Store auto shooting state
+        private float _autoAimAngle = 0f; // Store aim direction
+        
+        // Track original inputs
+        private bool _playerIsAlreadyFiring = false;
         
         public override void NetworkStart()
         {
@@ -48,31 +49,9 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             _weapon = GetComponent<PlayerCharacterWeapon>();
             if (_weapon == null)
             {
-                DebugLog("No PlayerCharacterWeapon found on this object!");
+                DebugLog("No PlayerCharacterWeapon found on this object! AutoShooter will not work.");
                 enabled = false;
                 return;
-            }
-            
-            // Get the weapon visual for debugging
-            _weaponVisual = GetComponentInChildren<PlayerCharacterWeaponVisual>();
-            
-            // Use reflection to get private methods we need to call directly
-            // This is a bit of a hack but necessary to ensure shooting works
-            _degreeProperty = _weapon.GetType().GetProperty("Degree");
-            
-            if (_directProcessShootingCall)
-            {
-                _processShootingMethod = _weapon.GetType().GetMethod("ProcessShooting", 
-                    BindingFlags.NonPublic | BindingFlags.Instance);
-                
-                if (_processShootingMethod == null)
-                {
-                    DebugLog("WARNING: Could not find ProcessShooting method - direct shooting will not work");
-                }
-                else
-                {
-                    DebugLog("Successfully found ProcessShooting method");
-                }
             }
             
             // Create aiming line indicator if debug is enabled
@@ -90,9 +69,12 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             
             DebugLog("AutoShooter initialized successfully");
         }
-
+        
         public override void NetworkFixedUpdate()
         {
+            // Only process on server
+            if (!IsServer) return;
+            
             // Update timers
             _targetCheckTimer -= Sandbox.FixedDeltaTime;
             _fireTimer -= Sandbox.FixedDeltaTime;
@@ -104,8 +86,8 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                 _targetCheckTimer = _targetCheckInterval;
             }
             
-            // Auto-aim and fire
-            UpdateAimAndFire();
+            // Update the debug line
+            UpdateVisuals();
         }
         
         private void FindTarget()
@@ -118,7 +100,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                 // Find all potential targets using Physics
                 Collider2D[] hitColliders = Physics2D.OverlapCircleAll(transform.position, _detectionRadius, _targetLayerMask);
                 
-                DebugLog($"Found {hitColliders.Length} colliders in detection radius");
+                VerboseLog($"Found {hitColliders.Length} colliders in detection radius");
                 
                 // Find the closest valid target
                 float closestDistance = float.MaxValue;
@@ -130,7 +112,7 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                     // Check if it has the target tag (if tag is specified)
                     if (!string.IsNullOrEmpty(_targetTag) && !hitCollider.CompareTag(_targetTag))
                     {
-                        DebugLog($"Object {hitCollider.name} has tag '{hitCollider.tag}', expected '{_targetTag}'");
+                        VerboseLog($"Object {hitCollider.name} has tag '{hitCollider.tag}', expected '{_targetTag}'");
                         continue;
                     }
                     
@@ -170,13 +152,75 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                 
                 _wasTargeting = _currentTarget != null;
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 DebugLog($"Error finding target: {ex.Message}");
             }
         }
         
-        private void UpdateAimAndFire()
+        // Hook into the player's input system in a non-intrusive way
+        // This method will be called by the player's input system
+        public bool ModifyInput(ref PlayerCharacterInput input)
+        {
+            // We should only modify input on the server for consistency
+            if (!IsServer) return false;
+            
+            // Store if the player is already trying to fire
+            _playerIsAlreadyFiring = input.IsFiring;
+            
+            // No target, no need to modify input
+            if (_currentTarget == null) return false;
+            
+            // Calculate aim direction
+            _autoAimAngle = CalculateAimAngle();
+            
+            // If player is already firing, don't interfere with their input
+            if (input.IsFiring)
+            {
+                VerboseLog("Player is already firing, not overriding");
+                return false;
+            }
+            
+            // If we're ready to fire at a target
+            if (_fireTimer <= 0)
+            {
+                // Only set automatic aim if player doesn't have a valid aim direction
+                // This prevents auto-aim from fighting with the player's manual aim
+                if (Mathf.Approximately(input.LookDegree, 0f))
+                {
+                    input.LookDegree = _autoAimAngle;
+                }
+                
+                // Set firing input
+                input.IsFiring = true;
+                
+                // Reset fire timer
+                _fireTimer = _fireInterval;
+                
+                DebugLog($"Auto-firing: Using angle {_autoAimAngle:F1}°");
+                return true;
+            }
+            
+            return false;
+        }
+        
+        private float CalculateAimAngle()
+        {
+            if (_currentTarget == null) return 0f;
+            
+            // Calculate direction to target
+            Vector2 direction = _currentTarget.position - transform.position;
+            
+            // Convert to angle (degrees)
+            float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
+            
+            // Add random spread for more natural shooting
+            angle += UnityEngine.Random.Range(-_aimSpread, _aimSpread);
+            
+            return angle;
+        }
+        
+        private void UpdateVisuals()
         {
             // Update aiming line if debug is enabled
             if (_aimLine != null)
@@ -192,73 +236,6 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                     _aimLine.enabled = false;
                 }
             }
-            
-            // If no target, make sure we're not firing
-            if (_currentTarget == null)
-            {
-                // Clear firing flag through input
-                if (FetchInput(out PlayerCharacterInput input))
-                {
-                    input.IsFiring = false;
-                }
-                return;
-            }
-            
-            try
-            {
-                // Calculate aim direction
-                Vector2 direction = _currentTarget.position - transform.position;
-                float angle = Mathf.Atan2(direction.y, direction.x) * Mathf.Rad2Deg;
-                
-                // Add randomness for natural shooting
-                angle += Random.Range(-_aimSpread, _aimSpread);
-                
-                // Method 1: Set input values through Netick's input system
-                if (FetchInput(out PlayerCharacterInput input))
-                {
-                    input.LookDegree = angle;
-                    input.IsFiring = true;
-                    DebugLog($"Aiming at angle: {angle:F1}°, Firing: true");
-                }
-                
-                // Method 2: Direct weapon property setting (if allowed)
-                if (Sandbox.IsServer && _degreeProperty != null && _degreeProperty.CanWrite)
-                {
-                    _degreeProperty.SetValue(_weapon, angle);
-                }
-                
-                // Method 3: Direct ProcessShooting call (most reliable)
-                if (_directProcessShootingCall && 
-                    Sandbox.IsServer && 
-                    _processShootingMethod != null && 
-                    _fireTimer <= 0)
-                {
-                    _processShootingMethod.Invoke(_weapon, null);
-                    _fireTimer = _fireInterval;
-                    DebugLog("Directly called ProcessShooting method");
-                }
-            }
-            catch (System.Exception ex)
-            {
-                DebugLog($"Error in UpdateAimAndFire: {ex.Message}");
-            }
-        }
-        
-        // Helper method to directly call weapon's ProcessShooting method
-        private void ForceShoot()
-        {
-            if (_processShootingMethod != null)
-            {
-                try
-                {
-                    _processShootingMethod.Invoke(_weapon, null);
-                    DebugLog("ForceShoot called successfully");
-                }
-                catch (System.Exception ex)
-                {
-                    DebugLog($"Error in ForceShoot: {ex.Message}");
-                }
-            }
         }
         
         private void DebugLog(string message)
@@ -266,6 +243,14 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             if (_enableDebugLogs)
             {
                 Debug.Log($"[AutoShooter] {message}");
+            }
+        }
+        
+        private void VerboseLog(string message)
+        {
+            if (_enableDebugLogs && _verboseDebugLogs)
+            {
+                Debug.Log($"[AutoShooter] [VERBOSE] {message}");
             }
         }
         

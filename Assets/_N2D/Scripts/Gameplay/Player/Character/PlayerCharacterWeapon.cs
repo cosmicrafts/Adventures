@@ -111,9 +111,30 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
 #endif
         }
 
+        // This helper method checks if auto-shooter should modify the input
+        private bool GetInputWithAutoShooter(out PlayerCharacterInput input)
+        {
+            // First get the regular input
+            bool hasInput = FetchInput(out input);
+            
+            // If we have input and we have an AutoShooter component, allow it to modify the input
+            if (hasInput)
+            {
+                var autoShooter = GetComponent<AutoShooter>();
+                if (autoShooter != null)
+                {
+                    // Let the AutoShooter modify the input (it will only change it if necessary)
+                    autoShooter.ModifyInput(ref input);
+                }
+            }
+            
+            return hasInput;
+        }
+
         private void ProcessShooting()
         {
-            if (!FetchInput(out PlayerCharacterInput input)) return;
+            // Use our helper method that integrates AutoShooter
+            if (!GetInputWithAutoShooter(out PlayerCharacterInput input)) return;
 
             if (!input.IsFiring) return;
 
@@ -208,6 +229,89 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             float y = Mathf.Sin(radians);
 
             return new Vector2(x, y);
+        }
+
+        // Direct firing method for automation (AutoShooter)
+        public bool FireDirectly(float aimDegree, bool doFire = true)
+        {
+            // Only the server can actually process shots
+            if (!IsServer) return false;
+            
+            // Update the aim direction - make sure to set the networked property
+            // This ensures the visualization system picks up the change
+            Degree = aimDegree;
+            
+            // If we're just updating aim and not actually firing, we're done
+            if (!doFire)
+            {
+                // The Degree property is already [Networked] so it will sync automatically
+                return true;
+            }
+            
+            // Respect fire rate restrictions
+            if (!_timerFireRate.IsExpiredOrNotRunning(Sandbox)) return false;
+            
+            // Check energy system
+            if (_energySystem != null && !_energySystem.HasEnoughEnergy(_energyCostPerShot)) return false;
+            
+            // Start fire rate timer
+            _timerFireRate = TickTimer.CreateFromSeconds(Sandbox, _fireRate);
+            
+            // Perform the actual shot
+            Vector2 direction = DegreesToDirection(Degree);
+            Vector2 originPoint = GetWeaponOriginPoint(direction);
+            
+            ShootingRaycastResult hitResult = default;
+            bool isHit = false;
+            
+            if (_raycastType == RaycastType.UnityPhysX)
+            {
+                isHit = ShootUnity(originPoint, direction, out hitResult);
+            }
+            else if (_raycastType == RaycastType.NetickLagComp)
+            {
+                isHit = ShootLagComp(originPoint, direction, out hitResult);
+            }
+            
+            // Deduct energy
+            if (_energySystem != null)
+            {
+                _energySystem.DeductEnergy(_energyCostPerShot);
+            }
+            
+            // Handle hit results
+            if (!isHit)
+            {
+                Vector2 fakeHitPosition = originPoint + (direction * 1000f);
+                
+                _lastProjectileHit = new ProjectileHit()
+                {
+                    Tick = Sandbox.Tick.TickValue,
+                    HitPosition = fakeHitPosition,
+                    OriginPosition = originPoint,
+                    IsHitPlayer = false,
+                };
+                
+                return true;
+            }
+            
+            bool isHitPlayer = false;
+            
+            if (TryGetComponentOrInParent(hitResult.HitObject, out PlayerCharacterHealth playerCharacterHealth))
+            {
+                isHitPlayer = true;
+                playerCharacterHealth.DeductShieldAndHealth(_damage, transform);
+            }
+            
+            _lastProjectileHit = new ProjectileHit()
+            {
+                Tick = Sandbox.Tick.TickValue,
+                HitPosition = hitResult.Point,
+                OriginPosition = originPoint,
+                IsHitPlayer = isHitPlayer,
+            };
+            
+            return true;
         }
     }
 }
