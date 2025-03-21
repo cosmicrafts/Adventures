@@ -177,8 +177,15 @@ namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
             // Log the firing direction
             Debug.Log($"[PlayerCharacterWeapon] FIRING at angle {Degree:F1}°");
 
-            Vector2 direction = DegreesToDirection(Degree);
+            // IMPORTANT: Use the most up-to-date aim direction from the input
+            // instead of the class property which might have been changed by other code
+            float firingAngle = input.LookDegree;
+            
+            // Ensure we're using the exact angle for firing
+            Vector2 direction = DegreesToDirection(firingAngle);
             Vector2 originPoint = GetWeaponOriginPoint(direction);
+            
+            Debug.Log($"[PlayerCharacterWeapon] Direction vector: {direction}, calculated from angle: {firingAngle:F1}°");
 
             ShootingRaycastResult hitResult = default;
             bool isHit = false;

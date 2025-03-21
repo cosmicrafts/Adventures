@@ -4,6 +4,8 @@ using Netick;
 using StinkySteak.N2D.Gameplay.PlayerInput;
 using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
 using System;
+using System.Reflection;
+using StinkySteak.Netick.Timer;  // Add this for TickTimer
 
 namespace StinkySteak.N2D.Gameplay.Player.Character
 {
@@ -93,6 +95,21 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
             {
                 FindTarget();
                 _targetCheckTimer = _targetCheckInterval;
+            }
+            
+            // Try to fire directly at the target if we have one
+            if (_currentTarget != null)
+            {
+                // Create a private firing timer to control fire rate
+                if (_fireTimer <= 0)
+                {
+                    DirectFire();
+                    _fireTimer = _fireInterval;
+                }
+                else
+                {
+                    _fireTimer -= Sandbox.FixedDeltaTime;
+                }
             }
             
             // Update the debug line
@@ -317,6 +334,197 @@ namespace StinkySteak.N2D.Gameplay.Player.Character
                 angleDifference += 360f;
             
             return angleDifference;
+        }
+        
+        // Direct firing method that bypasses normal weapon firing
+        private void DirectFire()
+        {
+            if (_currentTarget == null || _weapon == null || !IsServer) return;
+            
+            try
+            {
+                // Calculate aim direction to target
+                Vector2 targetDirection = (_currentTarget.position - transform.position).normalized;
+                float targetAngle = Mathf.Atan2(targetDirection.y, targetDirection.x) * Mathf.Rad2Deg;
+                
+                // Add random spread for more natural shooting
+                targetAngle += UnityEngine.Random.Range(-_aimSpread, _aimSpread);
+                
+                DebugLog($"DIRECT FIRING at angle {targetAngle:F1}°, direction: {targetDirection}");
+                
+                // Calculate origin point (same logic as in PlayerCharacterWeapon)
+                float weaponOffset = 1.5f; // Default value, try to get the real one if possible
+                try
+                {
+                    // Try to get the weapon's offset value via reflection
+                    var offsetField = _weapon.GetType().GetField("_weaponOriginPointOffset", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (offsetField != null)
+                    {
+                        weaponOffset = (float)offsetField.GetValue(_weapon);
+                    }
+                }
+                catch (Exception) { /* Ignore errors and use default */ }
+                
+                Vector2 originPoint = (Vector2)transform.position + (targetDirection * weaponOffset);
+                
+                // Perform the raycast directly
+                RaycastHit2D hit = Physics2D.Raycast(originPoint, targetDirection, 50f, _targetLayerMask);
+                
+                if (hit.collider != null)
+                {
+                    DebugLog($"DIRECT HIT on {hit.collider.name} at {hit.point}");
+                    
+                    // If it hit a player, apply damage
+                    if (hit.collider.TryGetComponent<Health.PlayerCharacterHealth>(out var health))
+                    {
+                        // Try to get the damage value from the weapon
+                        int damage = 10; // Default damage
+                        try
+                        {
+                            var damageField = _weapon.GetType().GetField("_damage", 
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (damageField != null)
+                            {
+                                damage = (int)damageField.GetValue(_weapon);
+                            }
+                        }
+                        catch (Exception) { /* Use default damage */ }
+                        
+                        health.DeductShieldAndHealth(damage, transform);
+                        DebugLog($"Applied {damage} damage to {hit.collider.name}");
+                    }
+                    
+                    // Update the weapon's ProjectileHit for visual effects
+                    var hitField = _weapon.GetType().GetField("_lastProjectileHit", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (hitField != null)
+                    {
+                        // Create a ProjectileHit struct
+                        // We need to use reflection to create it since it's not directly accessible
+                        var hitType = hitField.FieldType;
+                        var hitObj = Activator.CreateInstance(hitType);
+                        
+                        // Set the properties
+                        var tickProp = hitType.GetProperty("Tick");
+                        var hitPosProp = hitType.GetProperty("HitPosition");
+                        var originPosProp = hitType.GetProperty("OriginPosition");
+                        var isHitPlayerProp = hitType.GetProperty("IsHitPlayer");
+                        
+                        if (tickProp != null) tickProp.SetValue(hitObj, Sandbox.Tick.TickValue);
+                        if (hitPosProp != null) hitPosProp.SetValue(hitObj, hit.point);
+                        if (originPosProp != null) originPosProp.SetValue(hitObj, originPoint);
+                        if (isHitPlayerProp != null) isHitPlayerProp.SetValue(hitObj, health != null);
+                        
+                        // Set the field
+                        hitField.SetValue(_weapon, hitObj);
+                        
+                        // Try to invoke the OnLastProjectileHitChanged event
+                        var eventField = _weapon.GetType().GetField("OnLastProjectileHitChanged", 
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        if (eventField != null)
+                        {
+                            var eventObj = eventField.GetValue(_weapon) as Action;
+                            eventObj?.Invoke();
+                        }
+                    }
+                }
+                else
+                {
+                    // Missed, create a fake hit point
+                    Vector2 fakeHitPosition = originPoint + (targetDirection * 1000f);
+                    DebugLog($"DIRECT MISS, fake hit point at {fakeHitPosition}");
+                    
+                    // Same code as above to update the weapon's ProjectileHit
+                    var hitField = _weapon.GetType().GetField("_lastProjectileHit", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (hitField != null)
+                    {
+                        var hitType = hitField.FieldType;
+                        var hitObj = Activator.CreateInstance(hitType);
+                        
+                        var tickProp = hitType.GetProperty("Tick");
+                        var hitPosProp = hitType.GetProperty("HitPosition");
+                        var originPosProp = hitType.GetProperty("OriginPosition");
+                        var isHitPlayerProp = hitType.GetProperty("IsHitPlayer");
+                        
+                        if (tickProp != null) tickProp.SetValue(hitObj, Sandbox.Tick.TickValue);
+                        if (hitPosProp != null) hitPosProp.SetValue(hitObj, fakeHitPosition);
+                        if (originPosProp != null) originPosProp.SetValue(hitObj, originPoint);
+                        if (isHitPlayerProp != null) isHitPlayerProp.SetValue(hitObj, false);
+                        
+                        hitField.SetValue(_weapon, hitObj);
+                        
+                        var eventField = _weapon.GetType().GetField("OnLastProjectileHitChanged", 
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance);
+                        if (eventField != null)
+                        {
+                            var eventObj = eventField.GetValue(_weapon) as Action;
+                            eventObj?.Invoke();
+                        }
+                    }
+                }
+                
+                // Deduct energy
+                try
+                {
+                    var energySystemField = _weapon.GetType().GetField("_energySystem", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (energySystemField != null)
+                    {
+                        var energySystem = energySystemField.GetValue(_weapon);
+                        if (energySystem != null)
+                        {
+                            float energyCost = 10f; // Default cost
+                            var costField = _weapon.GetType().GetField("_energyCostPerShot", 
+                                System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                            if (costField != null)
+                            {
+                                energyCost = (float)costField.GetValue(_weapon);
+                            }
+                            
+                            var deductMethod = energySystem.GetType().GetMethod("DeductEnergy");
+                            if (deductMethod != null)
+                            {
+                                deductMethod.Invoke(energySystem, new object[] { energyCost });
+                                DebugLog($"Deducted {energyCost} energy");
+                            }
+                        }
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DebugLog($"Error deducting energy: {ex.Message}");
+                }
+                
+                // Reset the weapon's fire timer
+                try
+                {
+                    var timerField = _weapon.GetType().GetField("_timerFireRate", 
+                        System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                    if (timerField != null)
+                    {
+                        float fireRate = 0.5f; // Default rate
+                        var rateField = _weapon.GetType().GetField("_fireRate", 
+                            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+                        if (rateField != null)
+                        {
+                            fireRate = (float)rateField.GetValue(_weapon);
+                        }
+                        
+                        var timer = TickTimer.CreateFromSeconds(_weapon.Sandbox, fireRate);
+                        timerField.SetValue(_weapon, timer);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    DebugLog($"Error resetting fire timer: {ex.Message}");
+                }
+            }
+            catch (Exception ex)
+            {
+                DebugLog($"Error in DirectFire: {ex.Message}");
+            }
         }
     }
 } 
