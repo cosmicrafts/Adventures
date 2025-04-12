@@ -1,16 +1,16 @@
 using Netick;
 using Netick.Unity;
-using StinkySteak.N2D.Finder;
-using StinkySteak.N2D.Gameplay.Player.Character;
-using StinkySteak.N2D.Gameplay.Player.Session;
-using StinkySteak.N2D.Gameplay.PlayerManager.Global;
-using StinkySteak.N2D.Gameplay.Spawnpoints;
-using StinkySteak.N2D.Netick;
+using Cosmicrafts.Finder;
+using Cosmicrafts.Gameplay.Player.Character;
+using Cosmicrafts.Gameplay.Player.Session;
+using Cosmicrafts.Gameplay.PlayerManager.Global;
+using Cosmicrafts.Gameplay.Spawnpoints;
+using Cosmicrafts.Netick;
 using System.Collections.Generic;
 using UnityEngine;
 using NetworkPlayer = Netick.NetworkPlayer;
 
-namespace StinkySteak.N2D.Launcher.Prototype
+namespace Cosmicrafts.Launcher.Prototype
 {
     public class MatchManager : NetworkEventsListener
     {

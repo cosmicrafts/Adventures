@@ -1,10 +1,10 @@
 using Netick;
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.PlayerInput;
-using StinkySteak.N2D.Gameplay.Player.Character.Health;
-using StinkySteak.N2D.Gameplay.Player.Character.Energy;
+using Cosmicrafts.Gameplay.PlayerInput;
+using Cosmicrafts.Gameplay.Player.Character.Health;
+using Cosmicrafts.Gameplay.Player.Character.Energy;
 using System;
-using StinkySteak.N2D.Gameplay.Bullet.Dataset;
+using Cosmicrafts.Gameplay.Bullet.Dataset;
 using UnityEngine;
 using StinkySteak.Netick.Timer;
 
@@ -12,7 +12,7 @@ using StinkySteak.Netick.Timer;
 using Netick.Unity.Pro;
 #endif
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
+namespace Cosmicrafts.Gameplay.Player.Character.Weapon
 {
     public class PlayerCharacterWeapon : NetworkBehaviour
     {

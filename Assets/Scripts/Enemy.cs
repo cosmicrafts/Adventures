@@ -3,9 +3,9 @@ using Netick.Unity;
 using StinkySteak.Netick.Timer;
 using UnityEngine;
 using System;
-using StinkySteak.N2D.Gameplay.PlayerInput;
-using StinkySteak.N2D.Gameplay.Player.Character.Health;
-using StinkySteak.N2D.Gameplay.Player.Character.Skills;
+using Cosmicrafts.Gameplay.PlayerInput;
+using Cosmicrafts.Gameplay.Player.Character.Health;
+using Cosmicrafts.Gameplay.Player.Character.Skills;
 
 public class EnemyAI : NetworkBehaviour
 {

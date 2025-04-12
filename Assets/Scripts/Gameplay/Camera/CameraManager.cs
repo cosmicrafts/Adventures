@@ -1,11 +1,11 @@
 using Cinemachine;
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.Player.Character;
-using StinkySteak.N2D.Gameplay.PlayerManager.LocalPlayer;
-using StinkySteak.N2D.Netick;
+using Cosmicrafts.Gameplay.Player.Character;
+using Cosmicrafts.Gameplay.PlayerManager.LocalPlayer;
+using Cosmicrafts.Netick;
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.Cam.Manager
+namespace Cosmicrafts.Gameplay.Cam.Manager
 {
     public class CameraManager : NetickBehaviour, INetickSceneLoaded
     {

@@ -1,11 +1,11 @@
 using Netick;
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.Bullet.Dataset;
-using StinkySteak.N2D.Gameplay.Bullet.VFX;
+using Cosmicrafts.Gameplay.Bullet.Dataset;
+using Cosmicrafts.Gameplay.Bullet.VFX;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
+namespace Cosmicrafts.Gameplay.Player.Character.Weapon
 {
     public class PlayerCharacterWeaponVisual : NetickBehaviour
     {

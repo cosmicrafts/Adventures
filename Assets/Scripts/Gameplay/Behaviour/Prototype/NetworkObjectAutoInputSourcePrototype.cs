@@ -1,6 +1,6 @@
 using Netick.Unity;
 
-namespace StinkySteak.N2D.Gameplay.Behaviour
+namespace Cosmicrafts.Gameplay.Behaviour
 {
     /// <summary>
     /// <b>Prototyping</b> <br/>

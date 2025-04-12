@@ -1,11 +1,11 @@
 using Netick.Unity;
 using Netick;
-using StinkySteak.N2D.Gameplay.PlayerManager.Global;
-using StinkySteak.N2D.Gameplay.PlayerManager.LocalPlayer;
-using StinkySteak.N2D.Launcher.Prototype;
+using Cosmicrafts.Gameplay.PlayerManager.Global;
+using Cosmicrafts.Gameplay.PlayerManager.LocalPlayer;
+using Cosmicrafts.Launcher.Prototype;
 using System;
 
-namespace StinkySteak.N2D.Gameplay.Player.Session
+namespace Cosmicrafts.Gameplay.Player.Session
 {
     [ExecutionOrder(-100)]
     public class PlayerSession : NetworkBehaviour

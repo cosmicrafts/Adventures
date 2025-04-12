@@ -1,14 +1,14 @@
 using Netick;
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.Player.Character.Health;
-using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
-using StinkySteak.N2D.Gameplay.Player.Session;
-using StinkySteak.N2D.Gameplay.PlayerManager.Global;
+using Cosmicrafts.Gameplay.Player.Character.Health;
+using Cosmicrafts.Gameplay.Player.Character.Weapon;
+using Cosmicrafts.Gameplay.Player.Session;
+using Cosmicrafts.Gameplay.PlayerManager.Global;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.UI
+namespace Cosmicrafts.Gameplay.Player.Character.UI
 {
     public class PlayerCharacterUIStatus : NetickBehaviour
     {

@@ -1,9 +1,9 @@
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.Player.Character.Movement;
-using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
+using Cosmicrafts.Gameplay.Player.Character.Movement;
+using Cosmicrafts.Gameplay.Player.Character.Weapon;
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Animate
+namespace Cosmicrafts.Gameplay.Player.Character.Animate
 {
     public class PlayerCharacterAnimator : NetickBehaviour
     {

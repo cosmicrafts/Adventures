@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-namespace StinkySteak.N2D.Finder
+namespace Cosmicrafts.Finder
 {
     public static class ObjectFinder
     {

@@ -1,11 +1,11 @@
 using Netick;
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.Player.Character.Energy;
-using StinkySteak.N2D.Gameplay.Player.Character.Health;
-using StinkySteak.N2D.Gameplay.PlayerInput;
+using Cosmicrafts.Gameplay.Player.Character.Energy;
+using Cosmicrafts.Gameplay.Player.Character.Health;
+using Cosmicrafts.Gameplay.PlayerInput;
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Weapon
+namespace Cosmicrafts.Gameplay.Player.Character.Weapon
 {
     public class PlayerCharacterLaser : NetworkBehaviour
     {

@@ -2,9 +2,9 @@ using Netick;
 using Netick.Unity;
 using UnityEngine;
 using System;
-using StinkySteak.N2D.Gameplay.Player.Character.Energy;
+using Cosmicrafts.Gameplay.Player.Character.Energy;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Skills
+namespace Cosmicrafts.Gameplay.Player.Character.Skills
 {
 //     public class SkillSystem : NetworkBehaviour
 //     {

@@ -1,10 +1,10 @@
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.Player.Character;
-using StinkySteak.N2D.Gameplay.PlayerManager.LocalPlayer;
+using Cosmicrafts.Gameplay.Player.Character;
+using Cosmicrafts.Gameplay.PlayerManager.LocalPlayer;
 using UnityEngine;
 using System.Collections;
 
-namespace StinkySteak.N2D.Gameplay.PlayerInput
+namespace Cosmicrafts.Gameplay.PlayerInput
 {
     public class LocalInputProvider : NetworkEventsListener
     {

@@ -1,7 +1,7 @@
 using Netick.Unity;
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.Enemy.Animate
+namespace Cosmicrafts.Gameplay.Enemy.Animate
 {
     public class EnemyAnimator : NetickBehaviour
     {

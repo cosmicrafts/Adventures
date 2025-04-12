@@ -3,11 +3,11 @@ using Netick.Unity;
 using StinkySteak.Netick.Timer;
 using UnityEngine;
 using System;
-using StinkySteak.N2D.Gameplay.PlayerInput;
-using StinkySteak.N2D.Gameplay.Player.Character.Energy;
-using StinkySteak.N2D.Gameplay.Player.Character.Skills;
+using Cosmicrafts.Gameplay.PlayerInput;
+using Cosmicrafts.Gameplay.Player.Character.Energy;
+using Cosmicrafts.Gameplay.Player.Character.Skills;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Health
+namespace Cosmicrafts.Gameplay.Player.Character.Health
 {
     public class PlayerCharacterHealth : NetworkBehaviour
     {

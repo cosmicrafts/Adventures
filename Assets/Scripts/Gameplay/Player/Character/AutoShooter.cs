@@ -1,15 +1,15 @@
 using UnityEngine;
 using Netick.Unity;
 using Netick;
-using StinkySteak.N2D.Gameplay.PlayerInput;
-using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
-using StinkySteak.N2D.Gameplay.Player.Character.Movement;
-using StinkySteak.N2D.Gameplay.Player.Character.Energy;
+using Cosmicrafts.Gameplay.PlayerInput;
+using Cosmicrafts.Gameplay.Player.Character.Weapon;
+using Cosmicrafts.Gameplay.Player.Character.Movement;
+using Cosmicrafts.Gameplay.Player.Character.Energy;
 using System;
 using System.Collections.Generic;
 using StinkySteak.Netick.Timer;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character
+namespace Cosmicrafts.Gameplay.Player.Character
 {
     public class AutoShooter : NetworkBehaviour
     {

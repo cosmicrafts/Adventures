@@ -1,7 +1,7 @@
 using UnityEngine;
 using StinkySteak.Netick.Timer;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Skills
+namespace Cosmicrafts.Gameplay.Player.Character.Skills
 {
     [CreateAssetMenu(menuName = "Skills/New Skill")]
     public class SkillSO : ScriptableObject

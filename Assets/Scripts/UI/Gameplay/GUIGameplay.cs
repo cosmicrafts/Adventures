@@ -1,20 +1,20 @@
 using Netick;
 using Netick.Unity;
-using StinkySteak.N2D.Gameplay.Player.Character.Health;
-using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
-using StinkySteak.N2D.Gameplay.Player.Character.Energy;
-using StinkySteak.N2D.Gameplay.Player.Character;
-using StinkySteak.N2D.Gameplay.Player.Session;
-using StinkySteak.N2D.Gameplay.PlayerManager.Global;
-using StinkySteak.N2D.Gameplay.PlayerManager.LocalPlayer;
-using StinkySteak.N2D.Netick;
-using StinkySteak.N2D.Finder;
+using Cosmicrafts.Gameplay.Player.Character.Health;
+using Cosmicrafts.Gameplay.Player.Character.Weapon;
+using Cosmicrafts.Gameplay.Player.Character.Energy;
+using Cosmicrafts.Gameplay.Player.Character;
+using Cosmicrafts.Gameplay.Player.Session;
+using Cosmicrafts.Gameplay.PlayerManager.Global;
+using Cosmicrafts.Gameplay.PlayerManager.LocalPlayer;
+using Cosmicrafts.Netick;
+using Cosmicrafts.Finder;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 using Cosmicrafts.backend.Models;
 
-namespace StinkySteak.N2D.UI.Gameplay
+namespace Cosmicrafts.UI.Gameplay
 {
     public class GUIGameplay : MonoBehaviour, INetickSceneLoaded
     {

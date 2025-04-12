@@ -3,7 +3,7 @@ using Netick.Unity;
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using StinkySteak.N2D.Finder;
+using Cosmicrafts.Finder;
 
 public class Portal : NetworkBehaviour
 {
@@ -310,7 +310,7 @@ public class Portal : NetworkBehaviour
             try
             {
                 isInputSource = netObj.IsInputSource;
-                isPlayerCharacter = netObj.GetComponent<StinkySteak.N2D.Gameplay.Player.Character.PlayerCharacter>() != null;
+                isPlayerCharacter = netObj.GetComponent<Cosmicrafts.Gameplay.Player.Character.PlayerCharacter>() != null;
                 
                 // Additional debug info
                 Debug.Log($"[Portal {portalId}] Collision object details: ID={netObj.Id}, Name={netObj.name}, " +
@@ -439,7 +439,7 @@ public class Portal : NetworkBehaviour
                 
                 try
                 {
-                    var playerCharacter = netObj.GetComponent<StinkySteak.N2D.Gameplay.Player.Character.PlayerCharacter>();
+                    var playerCharacter = netObj.GetComponent<Cosmicrafts.Gameplay.Player.Character.PlayerCharacter>();
                     if (playerCharacter != null)
                     {
                         bool isInputSource = false;

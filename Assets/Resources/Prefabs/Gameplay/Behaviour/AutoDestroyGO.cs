@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.Behaviour
+namespace Cosmicrafts.Gameplay.Behaviour
 {
     public class AutoDestroyGO : MonoBehaviour
     {

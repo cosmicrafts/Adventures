@@ -1,7 +1,7 @@
 using Netick;
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.PlayerInput
+namespace Cosmicrafts.Gameplay.PlayerInput
 {
     public struct PlayerCharacterInput : INetworkInput
     {

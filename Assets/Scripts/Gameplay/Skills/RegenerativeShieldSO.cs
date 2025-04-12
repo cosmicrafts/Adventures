@@ -1,7 +1,7 @@
 using UnityEngine;
-using StinkySteak.N2D.Gameplay.Player.Character.Health;
+using Cosmicrafts.Gameplay.Player.Character.Health;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Skills
+namespace Cosmicrafts.Gameplay.Player.Character.Skills
 {
     [CreateAssetMenu(menuName = "Skills/Regenerative Shield")]
     public class RegenerativeShieldSO : SkillSO

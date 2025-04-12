@@ -1,10 +1,10 @@
-using StinkySteak.N2D.Gameplay.Player.Character;
-using StinkySteak.N2D.Gameplay.Player.Session;
+using Cosmicrafts.Gameplay.Player.Character;
+using Cosmicrafts.Gameplay.Player.Session;
 using System.Collections.Generic;
 using UnityEngine;
 using Cosmicrafts.backend.Models;
 
-namespace StinkySteak.N2D.Gameplay.PlayerManager.Global
+namespace Cosmicrafts.Gameplay.PlayerManager.Global
 {
     public class GlobalPlayerManager : MonoBehaviour
     {

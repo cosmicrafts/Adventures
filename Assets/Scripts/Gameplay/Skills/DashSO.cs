@@ -1,7 +1,7 @@
 using UnityEngine;
-using StinkySteak.N2D.Gameplay.Player.Character.Movement;
+using Cosmicrafts.Gameplay.Player.Character.Movement;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Skills
+namespace Cosmicrafts.Gameplay.Player.Character.Skills
 {
     [CreateAssetMenu(menuName = "Skills/Dash")]
     public class DashSkillSO : SkillSO

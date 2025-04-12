@@ -1,12 +1,12 @@
 using Netick.Unity;
 using Netick;
-using StinkySteak.N2D.Gameplay.PlayerInput;
-using StinkySteak.N2D.Gameplay.Player.Character.Weapon;  // To access weapon's rotation
-using StinkySteak.N2D.Gameplay.Player.Character.Energy;  // Import the energy system
+using Cosmicrafts.Gameplay.PlayerInput;
+using Cosmicrafts.Gameplay.Player.Character.Weapon;  // To access weapon's rotation
+using Cosmicrafts.Gameplay.Player.Character.Energy;  // Import the energy system
 using UnityEngine;
-using StinkySteak.N2D.Gameplay.Player.Character.Skills;
+using Cosmicrafts.Gameplay.Player.Character.Skills;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Movement
+namespace Cosmicrafts.Gameplay.Player.Character.Movement
 {
     public class PlayerCharacterMovement : NetworkBehaviour
     {

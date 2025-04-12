@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.Bullet.Dataset
+namespace Cosmicrafts.Gameplay.Bullet.Dataset
 {
     public struct ProjectileHit
     {

@@ -1,6 +1,6 @@
 using Netick.Unity;
 
-namespace StinkySteak.N2D.Netick
+namespace Cosmicrafts.Netick
 {
     public interface INetickSceneLoaded
     {

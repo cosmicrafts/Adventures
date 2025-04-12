@@ -4,7 +4,7 @@ using StinkySteak.Netick.Timer;
 using UnityEngine;
 using System;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Energy
+namespace Cosmicrafts.Gameplay.Player.Character.Energy
 {
     public class PlayerEnergySystem : NetworkBehaviour
     {

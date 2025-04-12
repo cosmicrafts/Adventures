@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.Spawnpoints
+namespace Cosmicrafts.Gameplay.Spawnpoints
 {
     public class SpawnPoints : MonoBehaviour
     {

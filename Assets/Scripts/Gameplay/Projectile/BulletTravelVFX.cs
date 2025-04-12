@@ -2,7 +2,7 @@ using Netick.Unity;
 using StinkySteak.Netick.Timer;
 using UnityEngine;
 
-namespace StinkySteak.N2D.Gameplay.Bullet.VFX
+namespace Cosmicrafts.Gameplay.Bullet.VFX
 {
     public class BulletTravelVFX : NetickBehaviour
     {

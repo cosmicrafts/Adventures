@@ -3,7 +3,7 @@ using StinkySteak.Netick.Timer;
 using UnityEngine;
 using TMPro;
 
-namespace StinkySteak.N2D.Gameplay.Player.Character.Health.Visual
+namespace Cosmicrafts.Gameplay.Player.Character.Health.Visual
 {
     public class PlayerCharacterHealthVisual : NetickBehaviour
     {

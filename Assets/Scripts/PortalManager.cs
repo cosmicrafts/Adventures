@@ -2,9 +2,9 @@ using Netick;
 using Netick.Unity;
 using System.Collections.Generic;
 using UnityEngine;
-using StinkySteak.N2D.Finder;
+using Cosmicrafts.Finder;
 using System.Linq;
-using StinkySteak.N2D.Gameplay.Player.Character;
+using Cosmicrafts.Gameplay.Player.Character;
 
 public class PortalManager : NetworkBehaviour
 {

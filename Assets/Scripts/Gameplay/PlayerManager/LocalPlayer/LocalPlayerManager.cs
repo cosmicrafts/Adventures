@@ -1,11 +1,11 @@
 using Netick;
-using StinkySteak.N2D.Gameplay.Player.Character;
-using StinkySteak.N2D.Gameplay.Player.Session;
+using Cosmicrafts.Gameplay.Player.Character;
+using Cosmicrafts.Gameplay.Player.Session;
 using System;
 using UnityEngine;
 using UnityEngine.TextCore.Text;
 
-namespace StinkySteak.N2D.Gameplay.PlayerManager.LocalPlayer
+namespace Cosmicrafts.Gameplay.PlayerManager.LocalPlayer
 {
     public class LocalPlayerManager : MonoBehaviour
     {
