@@ -12,7 +12,67 @@ MonoBehaviour:
   m_Script: {fileID: 2061283162, guid: da78c2c9df60edc4fb5f65b59fa57c41, type: 3}
   m_Name: netickConfig
   m_EditorClassIdentifier: 
-  _Prefabs: []
+  _Prefabs:
+  - Obj: {fileID: 6276855212308729943, guid: 84bdaf9c034444f408cc66234ee3344d, type: 3}
+    InstanceId: 28180
+    Name: Bomb
+    FileName: Assets/Bomberman/Network Prefabs/Bomb.prefab
+    GO: {fileID: 8886278785656527844, guid: 84bdaf9c034444f408cc66234ee3344d, type: 3}
+    Id: 1
+  - Obj: {fileID: 8143126971102408644, guid: 98e433893a4b70f41a8ab2145afe3e07, type: 3}
+    InstanceId: 28184
+    Name: Bomberman Player
+    FileName: Assets/Bomberman/Network Prefabs/Bomberman Player.prefab
+    GO: {fileID: 2511112182317059464, guid: 98e433893a4b70f41a8ab2145afe3e07, type: 3}
+    Id: 2
+  - Obj: {fileID: 4469672062832013922, guid: 8e254087cbaecc049ac87981c263d46c, type: 3}
+    InstanceId: 28188
+    Name: DestroyableBlock
+    FileName: Assets/Bomberman/Network Prefabs/DestroyableBlock.prefab
+    GO: {fileID: 9137365252298567970, guid: 8e254087cbaecc049ac87981c263d46c, type: 3}
+    Id: 3
+  - Obj: {fileID: 9177126579482737267, guid: 09a0cccbd8f361641bd963785a4b016c, type: 3}
+    InstanceId: 28192
+    Name: Power Up
+    FileName: Assets/Bomberman/Network Prefabs/Power Up.prefab
+    GO: {fileID: 3064325587269614628, guid: 09a0cccbd8f361641bd963785a4b016c, type: 3}
+    Id: 4
+  - Obj: {fileID: 462263736606742652, guid: 1978a1f8cf362f2959c5cc160823986c, type: 3}
+    InstanceId: 28148
+    Name: NPC
+    FileName: Assets/Resources/Prefabs/Gameplay/Player/Character/NPC.prefab
+    GO: {fileID: 462263736606742655, guid: 1978a1f8cf362f2959c5cc160823986c, type: 3}
+    Id: 5
+  - Obj: {fileID: 462263736606742652, guid: 55f0b1aa9556a4f43b7f88a7451f34cd, type: 3}
+    InstanceId: 28156
+    Name: Player
+    FileName: Assets/Resources/Prefabs/Gameplay/Player/Character/Player.prefab
+    GO: {fileID: 462263736606742655, guid: 55f0b1aa9556a4f43b7f88a7451f34cd, type: 3}
+    Id: 6
+  - Obj: {fileID: 68535350912409233, guid: 65efd385498aa4347b106615a6c8e875, type: 3}
+    InstanceId: 28164
+    Name: PlayerSession
+    FileName: Assets/Resources/Prefabs/Gameplay/Player/Session/PlayerSession.prefab
+    GO: {fileID: 68535350912409235, guid: 65efd385498aa4347b106615a6c8e875, type: 3}
+    Id: 7
+  - Obj: {fileID: 462263736606742652, guid: 30a95f1efa5fc6ca798966e89d6efec7, type: 3}
+    InstanceId: 28168
+    Name: Dreno
+    FileName: Assets/Resources/Prefabs/New Folder/Dreno.prefab
+    GO: {fileID: 462263736606742655, guid: 30a95f1efa5fc6ca798966e89d6efec7, type: 3}
+    Id: 8
+  - Obj: {fileID: 462263736606742652, guid: 08e4cd0fd46b7819b9da44c2bd55b98c, type: 3}
+    InstanceId: 28172
+    Name: Marauder
+    FileName: Assets/Resources/Prefabs/New Folder/Marauder.prefab
+    GO: {fileID: 462263736606742655, guid: 08e4cd0fd46b7819b9da44c2bd55b98c, type: 3}
+    Id: 9
+  - Obj: {fileID: 462263736606742652, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
+    InstanceId: 28176
+    Name: Raider
+    FileName: Assets/Resources/Prefabs/New Folder/Raider.prefab
+    GO: {fileID: 462263736606742655, guid: c1f149510a96adfcdb22368825ec643b, type: 3}
+    Id: 10
   TickRate: 33.333336
   MaxPlayers: 16
   MaxObjects: 512

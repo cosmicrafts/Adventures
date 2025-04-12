@@ -3,16 +3,16 @@ using Netick.Unity;
 using StinkySteak.N2D.Gameplay.Player.Character.Health;
 using StinkySteak.N2D.Gameplay.Player.Character.Weapon;
 using StinkySteak.N2D.Gameplay.Player.Character.Energy;
+using StinkySteak.N2D.Gameplay.Player.Character;
 using StinkySteak.N2D.Gameplay.Player.Session;
 using StinkySteak.N2D.Gameplay.PlayerManager.Global;
-using TMPro;
-using UnityEngine;
-using UnityEngine.UI;
-using StinkySteak.N2D.Gameplay.Player.Character;
 using StinkySteak.N2D.Gameplay.PlayerManager.LocalPlayer;
 using StinkySteak.N2D.Netick;
 using StinkySteak.N2D.Finder;
-
+using TMPro;
+using UnityEngine;
+using UnityEngine.UI;
+using Cosmicrafts.backend.Models;
 
 namespace StinkySteak.N2D.UI.Gameplay
 {
@@ -24,6 +24,7 @@ namespace StinkySteak.N2D.UI.Gameplay
         [SerializeField] private Slider _energyBar; // Energy bar UI element
         private NetworkSandbox _networkSandbox;
         private PlayerEnergySystem _energySystem;
+        private Cosmicrafts.backend.Models.Player _blockchainPlayerData;
 
         public void OnSceneLoaded(NetworkSandbox sandbox)
         {
@@ -32,9 +33,22 @@ namespace StinkySteak.N2D.UI.Gameplay
             LocalPlayerManager localPlayerManager = _networkSandbox.GetComponent<LocalPlayerManager>();
             localPlayerManager.OnCharacterSpawned += OnCharacterSpawned;
             localPlayerManager.OnCharacterDespawned += OnCharacterDespawned;
+            localPlayerManager.OnSessionSpawned += OnSessionSpawned;
 
             _buttonSetNickname.onClick.AddListener(OnButtonSetNickname);
             _buttonRespawn.onClick.AddListener(OnButtonRespawn);
+
+            // Subscribe to ICPService events if it exists
+            if (ICPService.Instance != null)
+            {
+                ICPService.Instance.OnPlayerDataReceived += OnBlockchainPlayerDataReceived;
+                
+                // If player data already exists, use it immediately
+                if (ICPService.Instance.CurrentPlayer != null)
+                {
+                    OnBlockchainPlayerDataReceived(ICPService.Instance.CurrentPlayer);
+                }
+            }
         }
 
         private void OnCharacterSpawned(PlayerCharacter playerCharacter)
@@ -84,6 +98,27 @@ namespace StinkySteak.N2D.UI.Gameplay
             if (_energySystem != null)
             {
                 _energyBar.value = _energySystem.Energy;
+            }
+        }
+
+        private void OnBlockchainPlayerDataReceived(Player player)
+        {
+            // Store the player data for later use when session spawns
+            _blockchainPlayerData = player;
+            
+            // If we already have a session, update nickname immediately
+            if (_networkSandbox != null && _networkSandbox.GetComponent<LocalPlayerManager>().Session != null)
+            {
+                _networkSandbox.GetComponent<LocalPlayerManager>().Session.RPC_SetNickname(player.Username);
+            }
+        }
+
+        private void OnSessionSpawned(PlayerSession session)
+        {
+            // If we have blockchain data, set the nickname
+            if (_blockchainPlayerData != null)
+            {
+                session.RPC_SetNickname(_blockchainPlayerData.Username);
             }
         }
     }

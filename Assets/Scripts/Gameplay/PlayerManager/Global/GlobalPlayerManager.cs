@@ -2,6 +2,7 @@ using StinkySteak.N2D.Gameplay.Player.Character;
 using StinkySteak.N2D.Gameplay.Player.Session;
 using System.Collections.Generic;
 using UnityEngine;
+using Cosmicrafts.backend.Models;
 
 namespace StinkySteak.N2D.Gameplay.PlayerManager.Global
 {
