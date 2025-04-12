@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Threading.Tasks;
 using System.Text;
+using System.Runtime.InteropServices;
 
 // ICP libraries
 using EdjCase.ICP.Agent;
@@ -19,6 +20,16 @@ using Cosmicrafts.backend.Models;
 /// </summary>
 public class ICPService : MonoBehaviour
 {
+    // Imports from JavaScriptBridge.jslib
+    [DllImport("__Internal")]
+    private static extern void RequestAuthData();
+    
+    [DllImport("__Internal")]
+    private static extern void RequestLogout();
+    
+    [DllImport("__Internal")]
+    private static extern void SavePlayerData(string playerDataJson);
+    
     // Singleton instance
     public static ICPService Instance { get; private set; }
     
@@ -63,6 +74,7 @@ public class ICPService : MonoBehaviour
         #elif UNITY_WEBGL
         Log("WebGL mode - waiting for identity from web app");
         // WebGL initialization will be triggered externally
+        RequestAuthenticationData();
         #endif
     }
     
@@ -193,6 +205,111 @@ public class ICPService : MonoBehaviour
     private void Log(string message) => Debug.Log($"[ICPService] {message}");
     private void LogWarning(string message) => Debug.LogWarning($"[ICPService] {message}");
     private void LogError(string message) => Debug.LogError($"[ICPService] {message}");
+    
+    /// <summary>
+    /// Receives authentication data from the web app
+    /// </summary>
+    public void ReceiveAuthData(string authDataJson)
+    {
+        Log($"Received auth data from web app: {authDataJson}");
+        
+        try
+        {
+            // Process auth data from JSON
+            // Implementation depends on your auth data structure
+            Log("Auth data received successfully");
+        }
+        catch (Exception e)
+        {
+            LogError($"Error processing auth data: {e.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Sets the ICP identity from web app
+    /// </summary>
+    public async void SetICPIdentity(string icpIdentityJson)
+    {
+        Log($"Received ICP identity from web app");
+        
+        try
+        {
+            // Parse the identity data
+            ICPIdentityData identityData = JsonUtility.FromJson<ICPIdentityData>(icpIdentityJson);
+            
+            // Initialize with the seed phrase
+            if (!string.IsNullOrEmpty(identityData.seedPhrase))
+            {
+                await InitializeWithSeedPhrase(identityData.seedPhrase);
+            }
+            else
+            {
+                LogError("No seed phrase provided in identity data");
+            }
+        }
+        catch (Exception e)
+        {
+            LogError($"Error setting ICP identity: {e.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Sets player data received from web app
+    /// </summary>
+    public void SetPlayerData(string playerDataJson)
+    {
+        Log($"Received player data from web app");
+        
+        try
+        {
+            // Process player data if needed
+            // This might be used to update local cache without a blockchain call
+            Log("Player data received successfully");
+        }
+        catch (Exception e)
+        {
+            LogError($"Error processing player data: {e.Message}");
+        }
+    }
+    
+    /// <summary>
+    /// Request authentication data from the web app
+    /// </summary>
+    public void RequestAuthenticationData()
+    {
+        Log("Requesting authentication data from web app");
+        #if !UNITY_EDITOR && UNITY_WEBGL
+            RequestAuthData();
+        #else
+            Log("Not in WebGL mode, cannot request auth data from web app");
+        #endif
+    }
+    
+    /// <summary>
+    /// Request logout from the web app
+    /// </summary>
+    public void RequestLogoutFromWebApp()
+    {
+        Log("Requesting logout from web app");
+        #if !UNITY_EDITOR && UNITY_WEBGL
+            RequestLogout();
+        #else
+            Log("Not in WebGL mode, cannot request logout from web app");
+        #endif
+    }
+    
+    /// <summary>
+    /// Save player data to the web app
+    /// </summary>
+    public void SavePlayerDataToWebApp(string playerDataJson)
+    {
+        Log($"Saving player data to web app");
+        #if !UNITY_EDITOR && UNITY_WEBGL
+            SavePlayerData(playerDataJson);
+        #else
+            Log("Not in WebGL mode, cannot save player data to web app");
+        #endif
+    }
 }
 
 /// <summary>
