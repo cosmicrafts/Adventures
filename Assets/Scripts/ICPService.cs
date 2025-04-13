@@ -15,6 +15,13 @@ using Org.BouncyCastle.Crypto.Parameters;
 using Cosmicrafts.backend;
 using Cosmicrafts.backend.Models;
 
+// Additional types
+using Username = System.String;
+using Avatarid1 = EdjCase.ICP.Candid.Models.UnboundedUInt;
+using AvatarID = EdjCase.ICP.Candid.Models.UnboundedUInt;
+using ReferralCode = System.String;
+using PlayerId = EdjCase.ICP.Candid.Models.Principal;
+
 /// <summary>
 /// Minimal service to handle ICP authentication and player data retrieval.
 /// </summary>
@@ -174,13 +181,82 @@ public class ICPService : MonoBehaviour
             else
             {
                 Log("No player found for current identity");
-                return null;
+                
+                // Handle the case where no player is found - prompt for signup
+                await SignupNewPlayer();
+                
+                return CurrentPlayer;
             }
         }
         catch (Exception e)
         {
             LogError($"Error fetching player data: {e.Message}");
             return null;
+        }
+    }
+    
+    /// <summary>
+    /// Creates a new player account when none exists
+    /// </summary>
+    public async Task<bool> SignupNewPlayer(string username = null, int avatarId = 1, string referralCode = null, string language = "en")
+    {
+        if (!IsInitialized)
+        {
+            LogError("Cannot signup new player: not initialized");
+            return false;
+        }
+        
+        try
+        {
+            // If username is null, generate a random one
+            username = username ?? $"Player{UnityEngine.Random.Range(1000, 9999)}";
+            
+            // Create username from string
+            var usernameObj = username;
+            
+            // Create avatar ID from int (1-12 as mentioned)
+            var avatarIdObj = (UnboundedUInt)avatarId;
+            
+            // Create optional referral code
+            var referralCodeArg = string.IsNullOrEmpty(referralCode) 
+                ? new BackendApiClient.SignupArg2() 
+                : new BackendApiClient.SignupArg2(referralCode);
+            
+            // Call signup method
+            Log($"Signing up new player with username: {username}, avatarId: {avatarId}, language: {language}");
+            var result = await MainCanister.Signup(usernameObj, avatarIdObj, referralCodeArg, language);
+            
+            if (result.ReturnArg0)
+            {
+                Log("Signup successful");
+                
+                // Store the new player data
+                if (result.ReturnArg1.HasValue)
+                {
+                    CurrentPlayer = result.ReturnArg1.ValueOrDefault;
+                    Log($"Player created: {CurrentPlayer.Username} (Level {CurrentPlayer.Level})");
+                    
+                    // Notify listeners
+                    OnPlayerDataReceived?.Invoke(CurrentPlayer);
+                    
+                    return true;
+                }
+                else
+                {
+                    LogWarning("Signup successful but no player data returned");
+                    return true;
+                }
+            }
+            else
+            {
+                LogError($"Signup failed: {result.ReturnArg2}");
+                return false;
+            }
+        }
+        catch (Exception e)
+        {
+            LogError($"Error during signup: {e.Message}");
+            return false;
         }
     }
     
