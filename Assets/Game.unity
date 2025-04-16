@@ -223,6 +223,8 @@ GameObject:
   - component: {fileID: 678599817}
   - component: {fileID: 678599818}
   - component: {fileID: 678599819}
+  - component: {fileID: 678599821}
+  - component: {fileID: 678599820}
   m_Layer: 0
   m_Name: ICPService
   m_TagString: Untagged
@@ -271,6 +273,38 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: c06bae3799ab5484fac788c0fa47badb, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+--- !u!114 &678599820
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678599816}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e31798c068ea5c4dbf2486165c885e7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  inputName: {fileID: 0}
+  inputDescription: {fileID: 0}
+  inputImageUrl: {fileID: 0}
+  inputChestTokenId: {fileID: 0}
+  outputText: {fileID: 0}
+  outputScrollRect: {fileID: 0}
+  nftDisplayPrefab: {fileID: 0}
+  nftDisplayContainer: {fileID: 0}
+--- !u!114 &678599821
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 678599816}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c1429d42ae49884ca24ad8731591ec9, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
 --- !u!1 &891161240 stripped
@@ -526,7 +560,7 @@ MonoBehaviour:
   AutoStart: 0
   AutoConnect: 0
   Port: 25565
-  ServerIPAddress: 127.0.0.1
+  ServerIPAddress: 0.0.0.0
   Cap: 1
   FPS: 450
   ShowDisconnectButton: 1
@@ -1276,6 +1310,10 @@ PrefabInstance:
     - target: {fileID: 115487531971639167, guid: ba8d5785e665ea74db17884b3d21f24f, type: 3}
       propertyPath: m_Name
       value: GUIGameplay
+      objectReference: {fileID: 0}
+    - target: {fileID: 1638050648167895010, guid: ba8d5785e665ea74db17884b3d21f24f, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 0.0009765625
       objectReference: {fileID: 0}
     - target: {fileID: 2127339642422811207, guid: ba8d5785e665ea74db17884b3d21f24f, type: 3}
       propertyPath: m_fontAsset
